@@ -1,0 +1,21 @@
+Language: Cpp
+BasedOnStyle: Microsoft
+ColumnLimit: 120
+PointerAlignment: Left
+BreakConstructorInitializersBeforeComma: true
+SeparateDefinitionBlocks: Always
+AlwaysBreakTemplateDeclarations: Yes
+ReflowComments: false
+AlignConsecutiveAssignments: Consecutive
+BraceWrapping:
+  AfterCaseLabel: true
+  
+AlignAfterOpenBracket: Align
+BracedInitializerIndentWidth: 4
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowAllArgumentsOnNextLine : false
+AlignArrayOfStructures : Left
+AlignEscapedNewlines : Left
+BinPackArguments : false
+Cpp11BracedListStyle : true
+AlignOperands : AlignAfterOperator

@@ -1,0 +1,14 @@
+cmake_minimum_required(VERSION 3.16)
+
+project(Lina LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(CORE_LIBRARY_CMAKE_TARGET_NAME lina)
+
+add_library(${CORE_LIBRARY_CMAKE_TARGET_NAME} STATIC lina.h)
+target_include_directories(${CORE_LIBRARY_CMAKE_TARGET_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+set_target_properties(${CORE_LIBRARY_CMAKE_TARGET_NAME} PROPERTIES LINKER_LANGUAGE CXX)
+
+add_subdirectory(test/)
