@@ -1,2 +1,2 @@
 # Lina
-Lina is a lightweight C++ library providing high-performance BLAS operations for efficient linear algebra computations.
+Lina is a lightweight and efficient C++ library for linear algebra, designed specifically for 3D geometry and graphics applications.
