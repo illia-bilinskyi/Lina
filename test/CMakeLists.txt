@@ -12,7 +12,14 @@ enable_testing()
 
 set(TEST_LIBRARY_CMAKE_TARGET_NAME test_${CORE_LIBRARY_CMAKE_TARGET_NAME})
 
-add_executable(${TEST_LIBRARY_CMAKE_TARGET_NAME} test_lina.cpp)
+add_executable(${TEST_LIBRARY_CMAKE_TARGET_NAME}
+        test_matrix.cpp
+        test_vector.cpp
+        test_matrix_operations.cpp
+        test_vector_operations.cpp
+        test_vector_matrix_operations.cpp
+        test_transforms.cpp
+)
 target_link_libraries(${TEST_LIBRARY_CMAKE_TARGET_NAME}
         ${CORE_LIBRARY_CMAKE_TARGET_NAME}
         GTest::gtest_main

@@ -9,13 +9,17 @@ ReflowComments: false
 AlignConsecutiveAssignments: Consecutive
 BraceWrapping:
   AfterCaseLabel: true
-  
+
 AlignAfterOpenBracket: Align
 BracedInitializerIndentWidth: 4
 AllowAllParametersOfDeclarationOnNextLine: true
-AllowAllArgumentsOnNextLine : false
-AlignArrayOfStructures : Left
-AlignEscapedNewlines : Left
-BinPackArguments : false
-Cpp11BracedListStyle : true
-AlignOperands : AlignAfterOperator
+AllowAllArgumentsOnNextLine: true
+AlignArrayOfStructures: Left
+AlignEscapedNewlines: Left
+BinPackArguments: false
+Cpp11BracedListStyle: true
+AlignOperands: AlignAfterOperator
+
+AllowShortBlocksOnASingleLine: Empty
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: false
