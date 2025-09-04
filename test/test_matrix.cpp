@@ -49,6 +49,47 @@ TEST_F(MatrixTest, InitializerListConstructor)
     EXPECT_EQ(m(1, 1), 4.0f);
 }
 
+TEST(MatrixRowConstructorTest, InitializerListOfRowMatrices)
+{
+    // Test 2x3 matrix construction using row matrices
+    constexpr mat<float, 2, 3> M{
+        { 1.0f, 2.0f, 3.0f },
+        { 4.0f, 5.0f, 6.0f }
+    };
+
+    // Verify all elements are correctly placed
+    EXPECT_EQ(M(0, 0), 1.0f);
+    EXPECT_EQ(M(0, 1), 2.0f);
+    EXPECT_EQ(M(0, 2), 3.0f);
+    EXPECT_EQ(M(1, 0), 4.0f);
+    EXPECT_EQ(M(1, 1), 5.0f);
+    EXPECT_EQ(M(1, 2), 6.0f);
+
+    // Test that the matrix has correct dimensions
+    EXPECT_EQ(M.rows, 2);
+    EXPECT_EQ(M.cols, 3);
+
+    // Test constexpr compatibility
+    constexpr mat<float, 2, 2> constM{
+        { 1.0f, 2.0f },
+        { 3.0f, 4.0f }
+    };
+
+    static_assert(constM(0, 0) == 1.0f);
+    static_assert(constM(1, 1) == 4.0f);
+
+    // Test incomplete number of rows
+    constexpr mat<float, 2, 3> M2{
+        { 1.0f, 2.0f, 3.0f }
+    };
+    EXPECT_EQ(M2(0, 0), 1.0f);
+    EXPECT_EQ(M2(0, 1), 2.0f);
+    EXPECT_EQ(M2(0, 2), 3.0f);
+    EXPECT_EQ(M2(1, 0), 0.0f);
+    EXPECT_EQ(M2(1, 1), 0.0f);
+    EXPECT_EQ(M2(1, 2), 0.0f);
+}
+
 TEST_F(MatrixTest, CopyConstructor)
 {
     constexpr mat<float, 2, 3> original{ 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 9.0f };

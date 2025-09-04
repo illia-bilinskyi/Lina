@@ -27,22 +27,18 @@ struct mat
     }
 
     template <typename... Args, typename = std::enable_if_t<sizeof...(Args) == R * C>>
-    constexpr explicit mat(Args... args)
+    constexpr mat(Args... args)
     {
         std::size_t i = 0;
         ((a[i++] = args), ...);
     }
 
-    // Initializer list constructor - enables aggregate-like initialization
-    constexpr mat(std::initializer_list<T> init)
+    constexpr mat(std::initializer_list<mat<T, 1, C>> rows)
     {
         std::size_t i = 0;
-        for (auto val : init)
-        {
-            if (i >= R * C)
-                break;
-            a[i++] = val;
-        }
+        for (auto row : rows)
+            for (auto val : row.a)
+                a[i++] = val;
     }
 
     // Copy constructor for square matrices
