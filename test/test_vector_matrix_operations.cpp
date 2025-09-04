@@ -9,22 +9,22 @@ class VectorMatrixOperationsTest : public ::testing::Test
     void SetUp() override
     {
         // Test vectors
-        v1     = vec3f{1.0f, 2.0f, 3.0f};
-        v2     = vec3f{4.0f, 5.0f, 6.0f};
-        unit_x = vec3f{1.0f, 0.0f, 0.0f};
-        unit_y = vec3f{0.0f, 1.0f, 0.0f};
-        unit_z = vec3f{0.0f, 0.0f, 1.0f};
+        v1     = vec3f{ 1.0f, 2.0f, 3.0f };
+        v2     = vec3f{ 4.0f, 5.0f, 6.0f };
+        unit_x = vec3f{ 1.0f, 0.0f, 0.0f };
+        unit_y = vec3f{ 0.0f, 1.0f, 0.0f };
+        unit_z = vec3f{ 0.0f, 0.0f, 1.0f };
 
         // Test matrices
         identity_3x3 = identity<float, 3>();
         identity_4x4 = identity<float, 4>();
 
         // Scale matrices
-        scale_2x  = scale(vec3f{2.0f, 2.0f, 2.0f});
-        scale_xyz = scale(vec3f{1.0f, 2.0f, 3.0f});
+        scale_2x  = scale(vec3f{ 2.0f, 2.0f, 2.0f });
+        scale_xyz = scale(vec3f{ 1.0f, 2.0f, 3.0f });
 
         // Translation matrix
-        translate_123 = translation(vec3f{1.0f, 2.0f, 3.0f});
+        translate_123 = translation(vec3f{ 1.0f, 2.0f, 3.0f });
     }
 
     vec3f v1, v2, unit_x, unit_y, unit_z;
@@ -56,7 +56,7 @@ TEST_F(VectorMatrixOperationsTest, ToHomogeneous_CustomW)
 
 TEST_F(VectorMatrixOperationsTest, FromHomogeneous_UnitW)
 {
-    mat<float, 1, 4> homogeneous{2.0f, 4.0f, 6.0f, 1.0f};
+    mat<float, 1, 4> homogeneous{ 2.0f, 4.0f, 6.0f, 1.0f };
     vec3f result = from_homogeneous(homogeneous);
 
     EXPECT_EQ(result.x, 2.0f);
@@ -66,7 +66,7 @@ TEST_F(VectorMatrixOperationsTest, FromHomogeneous_UnitW)
 
 TEST_F(VectorMatrixOperationsTest, FromHomogeneous_NonUnitW)
 {
-    mat<float, 1, 4> homogeneous{4.0f, 8.0f, 12.0f, 2.0f};
+    mat<float, 1, 4> homogeneous{ 4.0f, 8.0f, 12.0f, 2.0f };
     vec3f result = from_homogeneous(homogeneous);
 
     EXPECT_EQ(result.x, 2.0f); // 4/2
@@ -98,7 +98,7 @@ TEST_F(VectorMatrixOperationsTest, Matrix3_Vector_Identity)
 
 TEST_F(VectorMatrixOperationsTest, Matrix3_Vector_Scale)
 {
-    mat3f scale_matrix{2.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 0.0f, 0.0f, 2.0f};
+    mat3f scale_matrix{ 2.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 0.0f, 0.0f, 2.0f };
     vec3f result = scale_matrix * v1;
 
     EXPECT_EQ(result.x, 2.0f * v1.x);
@@ -109,7 +109,7 @@ TEST_F(VectorMatrixOperationsTest, Matrix3_Vector_Scale)
 TEST_F(VectorMatrixOperationsTest, Matrix3_Vector_Rotation90Z)
 {
     // 90-degree rotation around Z-axis
-    mat3f rot_z{0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f};
+    mat3f rot_z{ 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f };
     vec3f result = rot_z * unit_x;
 
     EXPECT_NEAR(result.x, 0.0f, 1e-6f);
@@ -119,8 +119,8 @@ TEST_F(VectorMatrixOperationsTest, Matrix3_Vector_Rotation90Z)
 
 TEST_F(VectorMatrixOperationsTest, Matrix3_Vector_GeneralTransform)
 {
-    mat3f transform{1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f};
-    vec3f result = transform * vec3f{1.0f, 1.0f, 1.0f};
+    mat3f transform{ 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f };
+    vec3f result = transform * vec3f{ 1.0f, 1.0f, 1.0f };
 
     // Result should be sum of rows: [1+2+3, 4+5+6, 7+8+9]
     EXPECT_EQ(result.x, 6.0f);
@@ -208,8 +208,8 @@ TEST_F(VectorMatrixOperationsTest, Vector_Matrix3_Identity)
 
 TEST_F(VectorMatrixOperationsTest, Vector_Matrix3_ColumnOperation)
 {
-    mat3f transform{1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f};
-    vec3f result = vec3f{1.0f, 1.0f, 1.0f} * transform;
+    mat3f transform{ 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f };
+    vec3f result = vec3f{ 1.0f, 1.0f, 1.0f } * transform;
 
     // Result should be sum of columns: [1+4+7, 2+5+8, 3+6+9]
     EXPECT_EQ(result.x, 12.0f);
@@ -258,7 +258,7 @@ TEST_F(VectorMatrixOperationsTest, Vector_Matrix4_ZeroWHandling)
 
 TEST_F(VectorMatrixOperationsTest, Matrix_Vector_vs_Vector_Transpose_Consistency)
 {
-    mat3f test_matrix{1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f};
+    mat3f test_matrix{ 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f };
 
     // These should be different due to different operations
     vec3f matrix_vector = test_matrix * v1;
@@ -272,10 +272,10 @@ TEST_F(VectorMatrixOperationsTest, Matrix_Vector_vs_Vector_Transpose_Consistency
 
 TEST_F(VectorMatrixOperationsTest, Homogeneous_Coordinate_Precision)
 {
-    vec3f original{1.234567f, 2.345678f, 3.456789f};
+    vec3f original{ 1.234567f, 2.345678f, 3.456789f };
 
     // Test with various w values
-    for (float w : {0.1f, 1.0f, 2.0f, 10.0f, 100.0f})
+    for (float w : { 0.1f, 1.0f, 2.0f, 10.0f, 100.0f })
     {
         mat<float, 1, 4> homogeneous = to_homogeneous(original, w);
         vec3f recovered              = from_homogeneous(homogeneous);
@@ -290,7 +290,7 @@ TEST_F(VectorMatrixOperationsTest, Homogeneous_Coordinate_Precision)
 
 TEST_F(VectorMatrixOperationsTest, Zero_Vector_Operations)
 {
-    vec3f zero{0.0f, 0.0f, 0.0f};
+    vec3f zero{ 0.0f, 0.0f, 0.0f };
 
     auto result_mat3 = identity_3x3 * zero;
     EXPECT_EQ(result_mat3.x, 0.0f);
@@ -305,7 +305,7 @@ TEST_F(VectorMatrixOperationsTest, Zero_Vector_Operations)
 
 TEST_F(VectorMatrixOperationsTest, Large_Values_Stability)
 {
-    vec3f large{1e6f, 2e6f, 3e6f};
+    vec3f large{ 1e6f, 2e6f, 3e6f };
 
     auto result_mat3 = identity_3x3 * large;
     EXPECT_NEAR(result_mat3.x, large.x, 1e-2f); // Allow for floating point precision

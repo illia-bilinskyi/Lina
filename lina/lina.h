@@ -11,7 +11,7 @@ struct mat
 {
     static_assert(std::is_arithmetic_v<T>, "Matrix supports only arithmetic types.");
 
-    T a[R * C]{0}; // column-major: index = c*R + r
+    T a[R * C]{ 0 }; // column-major: index = c*R + r
 
     static constexpr std::size_t rows = R;
     static constexpr std::size_t cols = C;
@@ -61,7 +61,7 @@ struct mat
     constexpr explicit mat(const mat<T2, R, C>& m)
     {
         for (std::size_t i = 0; i < R * C; i++)
-            a[i] = static_cast<T>(m.a[i]);
+            a[i] = static_cast<T>(m[i]);
     }
 
     template <std::size_t r, std::size_t c>
@@ -81,11 +81,8 @@ struct mat
     }
 
     constexpr T& operator()(std::size_t r, std::size_t c) { return a[c + r * C]; }
-
     constexpr const T& operator()(std::size_t r, std::size_t c) const { return a[c + r * C]; }
-
     constexpr T& operator[](std::size_t i) { return a[i]; }
-
     constexpr const T& operator[](std::size_t i) const { return a[i]; }
 
     constexpr T& operator()(std::size_t i)
@@ -101,7 +98,6 @@ struct mat
     }
 
     constexpr T* data() { return a; }
-
     constexpr const T* data() const { return a; }
 
     constexpr mat<T, R, 1> col(std::size_t c) const
@@ -142,7 +138,7 @@ struct mat
     {
         mat res{};
         for (std::size_t i = 0; i < R * C; i++)
-            res.a[i] = -a[i];
+            res[i] = -a[i];
         return res;
     }
 
@@ -152,14 +148,12 @@ struct mat
     {
         mat res{};
         for (std::size_t i = 0; i < R * C; i++)
-            res.a[i] = a[i] * s;
+            res[i] = a[i] * s;
         return res;
     }
 
-    constexpr mat operator/(T s) const { return *this * (T{1} / s); }
-
+    constexpr mat operator/(T s) const { return *this * (T{ 1 } / s); }
     constexpr mat& operator*=(T s) { return *this = *this * s; }
-
     constexpr mat& operator/=(T s) { return *this = *this / s; }
 
     // ===== Matrix elementwise ops =====
@@ -168,14 +162,12 @@ struct mat
     {
         mat res{};
         for (std::size_t i = 0; i < R * C; i++)
-            res.a[i] = a[i] + other.a[i];
+            res[i] = a[i] + other[i];
         return res;
     }
 
     constexpr mat operator-(const mat& other) const { return *this + (-other); }
-
     constexpr mat& operator+=(const mat& other) { return *this = *this + other; }
-
     constexpr mat& operator-=(const mat& other) { return *this += -other; }
 
     // ===== Matrix multiplication =====
@@ -203,7 +195,8 @@ struct vec3
 {
     static_assert(std::is_arithmetic_v<T>, "Vector supports only arithmetic types.");
 
-    union {
+    union
+    {
         T a[3]{};
 
         struct
@@ -213,27 +206,24 @@ struct vec3
     };
 
     constexpr vec3()
-        : a{T{0}, T{0}, T{0}}
-    {
-    }
+        : a{ T{ 0 }, T{ 0 }, T{ 0 } }
+    {}
 
     constexpr vec3(T x_, T y_, T z_)
-        : a{x_, y_, z_}
-    {
-    }
+        : a{ x_, y_, z_ }
+    {}
 
     // Fill constructor
     constexpr explicit vec3(T value)
-        : a{value, value, value}
-    {
-    }
+        : a{ value, value, value }
+    {}
 
     constexpr vec3(std::initializer_list<T> init)
     {
         auto it = init.begin();
-        a[0]    = (it != init.end()) ? *it++ : T{0};
-        a[1]    = (it != init.end()) ? *it++ : T{0};
-        a[2]    = (it != init.end()) ? *it : T{0};
+        a[0]    = (it != init.end()) ? *it++ : T{ 0 };
+        a[1]    = (it != init.end()) ? *it++ : T{ 0 };
+        a[2]    = (it != init.end()) ? *it : T{ 0 };
     }
 
     // Copy constructor
@@ -243,25 +233,22 @@ struct vec3
     constexpr vec3& operator=(const vec3& other) = default;
 
     // Conversion operator into matrix
-    constexpr explicit operator mat<T, 3, 1>() const { return mat<T, 3, 1>{a[0], a[1], a[2]}; }
-
-    constexpr explicit operator mat<T, 1, 3>() const { return mat<T, 1, 3>{a[0], a[1], a[2]}; }
+    constexpr explicit operator mat<T, 3, 1>() const { return mat<T, 3, 1>{ a[0], a[1], a[2] }; }
+    constexpr explicit operator mat<T, 1, 3>() const { return mat<T, 1, 3>{ a[0], a[1], a[2] }; }
 
     constexpr explicit vec3(const mat<T, 1, 3>& m)
         : vec3(m(0), m(1), m(2))
-    {
-    }
+    {}
 
     constexpr explicit vec3(const mat<T, 3, 1>& m)
         : vec3(m(0), m(1), m(2))
-    {
-    }
+    {}
 
     template <typename T2>
     constexpr vec3(const vec3<T2>& other)
     {
         for (std::size_t i = 0; i < 3; i++)
-            a[i] = static_cast<T>(other.a[i]);
+            a[i] = static_cast<T>(other[i]);
     }
 
     template <std::size_t i>
@@ -279,48 +266,36 @@ struct vec3
     }
 
     constexpr T& operator()(std::size_t i) { return a[i]; }
-
     constexpr const T& operator()(std::size_t i) const { return a[i]; }
-
     constexpr T& operator[](std::size_t i) { return a[i]; }
-
     constexpr const T& operator[](std::size_t i) const { return a[i]; }
 
     T* data() { return a; }
-
     const T* data() const { return a; }
 
     // ===== Unary Arithmetic Operations =====
 
     constexpr vec3 operator+() const { return *this; }
-
-    constexpr vec3 operator-() const { return vec3(-a[0], -a[1], -a[2]); }
+    constexpr vec3 operator-() const { return { -a[0], -a[1], -a[2] }; }
 
     // ===== Binary Arithmetic Operations (vector + vector) =====
 
-    constexpr vec3 operator+(const vec3& other) const
-    {
-        return vec3(a[0] + other[0], a[1] + other[1], a[2] + other[2]);
-    }
-
+    constexpr vec3 operator+(const vec3& other) const { return { a[0] + other[0], a[1] + other[1], a[2] + other[2] }; }
     constexpr vec3 operator-(const vec3& other) const { return *this + (-other); }
 
     // ===== Binary Arithmetic Operations (vector + scalar) =====
 
-    constexpr vec3 operator*(T scalar) const { return vec3{a[0] * scalar, a[1] * scalar, a[2] * scalar}; }
-
-    constexpr vec3 operator/(T scalar) const { return *this * (T{1} / scalar); }
+    constexpr vec3 operator*(T scalar) const { return { a[0] * scalar, a[1] * scalar, a[2] * scalar }; }
+    constexpr vec3 operator/(T scalar) const { return *this * (T{ 1 } / scalar); }
 
     // ===== Compound Assignment Operations (vector + vector) =====
 
     vec3& operator+=(const vec3& other) { return *this = *this + other; }
-
     vec3& operator-=(const vec3& other) { return *this += -other; }
 
     // ===== Compound Assignment Operations (vector + scalar) =====
 
     vec3& operator*=(T scalar) { return *this = *this * scalar; }
-
     vec3& operator/=(T scalar) { return *this = *this / scalar; }
 };
 
@@ -471,24 +446,21 @@ template <typename T>
 constexpr mat<T, 2, 2> c_inverse(const mat<T, 2, 2>& M)
 {
     T d = det(M);
-    return mat<T, 2, 2>{M(1, 1) / d, -M(0, 1) / d, -M(1, 0) / d, M(0, 0) / d};
+    return mat<T, 2, 2>{ M(1, 1) / d, -M(0, 1) / d, -M(1, 0) / d, M(0, 0) / d };
 }
 
 template <typename T>
 constexpr mat<T, 3, 3> c_inverse(const mat<T, 3, 3>& M)
 {
     T d = det(M);
-    return mat<T, 3, 3>{(M(1, 1) * M(2, 2) - M(1, 2) * M(2, 1)) / d,
-                        (M(0, 2) * M(2, 1) - M(0, 1) * M(2, 2)) / d,
-                        (M(0, 1) * M(1, 2) - M(0, 2) * M(1, 1)) / d,
+    return mat<T, 3, 3>{ (M(1, 1) * M(2, 2) - M(1, 2) * M(2, 1)) / d, (M(0, 2) * M(2, 1) - M(0, 1) * M(2, 2)) / d,
+                         (M(0, 1) * M(1, 2) - M(0, 2) * M(1, 1)) / d,
 
-                        (M(1, 2) * M(2, 0) - M(1, 0) * M(2, 2)) / d,
-                        (M(0, 0) * M(2, 2) - M(0, 2) * M(2, 0)) / d,
-                        (M(0, 2) * M(1, 0) - M(0, 0) * M(1, 2)) / d,
+                         (M(1, 2) * M(2, 0) - M(1, 0) * M(2, 2)) / d, (M(0, 0) * M(2, 2) - M(0, 2) * M(2, 0)) / d,
+                         (M(0, 2) * M(1, 0) - M(0, 0) * M(1, 2)) / d,
 
-                        (M(1, 0) * M(2, 1) - M(1, 1) * M(2, 0)) / d,
-                        (M(0, 1) * M(2, 0) - M(0, 0) * M(2, 1)) / d,
-                        (M(0, 0) * M(1, 1) - M(0, 1) * M(1, 0)) / d};
+                         (M(1, 0) * M(2, 1) - M(1, 1) * M(2, 0)) / d, (M(0, 1) * M(2, 0) - M(0, 0) * M(2, 1)) / d,
+                         (M(0, 0) * M(1, 1) - M(0, 1) * M(1, 0)) / d };
 }
 
 template <typename T>
@@ -556,9 +528,9 @@ constexpr T dot(const vec3<T>& a, const vec3<T>& b)
 template <typename T>
 constexpr vec3<T> cross(const vec3<T>& a, const vec3<T>& b)
 {
-    return vec3<T>{a[1] * b[2] - a[2] * b[1], //
-                   a[2] * b[0] - a[0] * b[2], //
-                   a[0] * b[1] - a[1] * b[0]};
+    return vec3<T>{ a[1] * b[2] - a[2] * b[1], //
+                    a[2] * b[0] - a[0] * b[2], //
+                    a[0] * b[1] - a[1] * b[0] };
 }
 
 template <typename T>
@@ -597,50 +569,50 @@ T distance(const vec3<T> a, const vec3<T> b)
 template <typename T>
 constexpr mat<T, 1, 4> to_homogeneous(const vec3<T>& v, T w = T(1))
 {
-    return {v[0], v[1], v[2], w};
+    return { v[0], v[1], v[2], w };
 }
 
 template <typename T>
 constexpr vec3<T> from_homogeneous(const mat<T, 1, 4>& m)
 {
     auto& w = m(0, 3);
-    return {m(0, 0) / w, m(0, 1) / w, m(0, 2) / w};
+    return { m(0, 0) / w, m(0, 1) / w, m(0, 2) / w };
 }
 
 template <typename T>
 constexpr vec3<T> operator*(const mat3<T>& m, const vec3<T>& v)
 {
     auto _v = static_cast<mat<T, 3, 1>>(v);
-    return vec3<T>{m * _v};
+    return vec3<T>{ m * _v };
 }
 
 template <typename T>
 constexpr vec3<T> operator*(const mat4<T>& m, const vec3<T>& v)
 {
-    mat<T, 4, 1> _v{v[0], v[1], v[2], T{1}};
+    mat<T, 4, 1> _v{ v[0], v[1], v[2], T{ 1 } };
     mat<T, 4, 1> result = m * _v;
     const T& w          = result(3, 0);
     if (almost_zero(w))
         return {};
-    return vec3<T>{result(0) / w, result(1) / w, result(2) / w};
+    return vec3<T>{ result(0) / w, result(1) / w, result(2) / w };
 }
 
 template <typename T>
 constexpr vec3<T> operator*(const vec3<T>& v, const mat3<T>& m)
 {
     auto _v = static_cast<mat<T, 1, 3>>(v);
-    return vec3<T>{_v * m};
+    return vec3<T>{ _v * m };
 }
 
 template <typename T>
 constexpr vec3<T> operator*(const vec3<T>& v, const mat4<T>& m)
 {
-    mat<T, 1, 4> _v{v[0], v[1], v[2], T{1}};
+    mat<T, 1, 4> _v{ v[0], v[1], v[2], T{ 1 } };
     mat<T, 1, 4> result = _v * m;
     const T& w          = result(0, 3);
     if (almost_zero(w))
         return {};
-    return vec3<T>{result(0) / w, result(1) / w, result(2) / w};
+    return vec3<T>{ result(0) / w, result(1) / w, result(2) / w };
 }
 
 // ========================= 3D Transforms (mat4) =========================
@@ -775,8 +747,8 @@ bool is_rotation_valid(const mat3<T>& rot)
     if (almost_zero(determinant))
         return false;
 
-    bool is_orthogonal      = almost_equal(c_inverse(rot), transpose(rot));
-    bool determinant_is_one = almost_equal(std::abs(determinant), T(1.0));
+    const bool is_orthogonal      = almost_equal(c_inverse(rot), transpose(rot));
+    const bool determinant_is_one = almost_equal(std::abs(determinant), T(1.0));
 
     return is_orthogonal && determinant_is_one;
 }
@@ -790,15 +762,15 @@ constexpr bool is_scale_valid(const vec3<T>& s)
 template <typename T>
 constexpr vec3<T> get_translation(const mat4<T>& t)
 {
-    return {t(0, 3), t(1, 3), t(2, 3)};
+    return { t(0, 3), t(1, 3), t(2, 3) };
 }
 
 template <typename T>
 vec3<T> get_scale(const mat4<T>& t)
 {
-    return {length(vec3<T>{t(0, 0), t(0, 1), t(0, 2)}), //
-            length(vec3<T>{t(1, 0), t(1, 1), t(1, 2)}), //
-            length(vec3<T>{t(2, 0), t(2, 1), t(2, 2)})};
+    return { length(vec3<T>{ t(0, 0), t(0, 1), t(0, 2) }),
+             length(vec3<T>{ t(1, 0), t(1, 1), t(1, 2) }),
+             length(vec3<T>{ t(2, 0), t(2, 1), t(2, 2) }) };
 }
 
 template <typename T>
@@ -837,7 +809,7 @@ mat4<T> inverse_transform(const mat4<T>& transform)
 
     auto inv_t = translation(-t);
     auto inv_r = rotation(transpose(r));
-    auto inv_s = scale(vec3<T>{1 / s.x, 1 / s.y, 1 / s.z});
+    auto inv_s = scale(vec3<T>{ 1 / s.x, 1 / s.y, 1 / s.z });
     return inv_s * inv_r * inv_t;
 }
 
@@ -846,45 +818,43 @@ mat4<T> inverse_transform(const mat4<T>& transform)
 template <typename T>
 mat4<T> look_at(const vec3<T>& eye, const vec3<T>& center, const vec3<T>& up)
 {
-    // clang-format off
-    vec3<T> f = normalize(center - eye);  // Direction camera is looking
-    vec3<T> r = normalize(cross(f, up));  // Camera's right
-    vec3<T> u = cross(r, f);  // Camera's up (recomputed for orthogonality)
+    vec3<T> f = normalize(center - eye); // Direction camera is looking
+    vec3<T> r = normalize(cross(f, up)); // Camera's right
+    vec3<T> u = cross(r, f);             // Camera's up (recomputed for orthogonality)
 
     // Create translation part (negative because we're moving the world, not the camera)
-    vec3<T> t{-dot(r, eye), -dot(u, eye), dot(f, eye)};
+    vec3<T> t{ -dot(r, eye), -dot(u, eye), dot(f, eye) };
 
-    return transpose(mat4<T>{
-        r.x,     u.x,     -f.x,     T{0},
-        r.y,     u.y,     -f.y,     T{0},
-        r.z,     u.z,     -f.z,     T{0},
-        t.x,     t.y,      t.z,     T{1}
-    });
-    // clang-format on
+    return {
+        r.x,    r.y,    r.z,    t.x,   //
+        u.x,    u.y,    u.z,    t.y,   //
+        -f.x,   -f.y,   -f.z,   t.z,   //
+        T{ 0 }, T{ 0 }, T{ 0 }, T{ 1 } //
+    };
 }
 
 template <typename T>
 constexpr vec3<T> right_vec(const mat4<T>& view)
 {
-    return {view.template get<0, 0>(), view.template get<0, 1>(), view.template get<0, 2>()};
+    return { view.template get<0, 0>(), view.template get<0, 1>(), view.template get<0, 2>() };
 }
 
 template <typename T>
 constexpr vec3<T> up_vec(const mat4<T>& view)
 {
-    return {view.template get<1, 0>(), view.template get<1, 1>(), view.template get<1, 2>()};
+    return { view.template get<1, 0>(), view.template get<1, 1>(), view.template get<1, 2>() };
 }
 
 template <typename T>
 constexpr vec3<T> forward_vec(const mat4<T>& view)
 {
-    return {-view.template get<2, 0>(), -view.template get<2, 1>(), -view.template get<2, 2>()};
+    return { -view.template get<2, 0>(), -view.template get<2, 1>(), -view.template get<2, 2>() };
 }
 
 template <typename T>
 constexpr vec3<T> translation_vec(const mat4<T>& view)
 {
-    return {view.template get<3, 0>(), view.template get<3, 1>(), view.template get<3, 2>()};
+    return { view.template get<3, 0>(), view.template get<3, 1>(), view.template get<3, 2>() };
 }
 
 } // namespace lina

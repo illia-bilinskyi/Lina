@@ -8,9 +8,11 @@ const double EPSILON_D = 1e-12;
 
 // ========================= 4x4 Matrix Inverse Tests =========================
 
-class Mat4InverseTest : public ::testing::Test {
+class Mat4InverseTest : public ::testing::Test
+{
   protected:
-    void SetUp() override {
+    void SetUp() override
+    {
         // Common test matrices
         identity_mat = identity<float, 4>();
 
@@ -44,7 +46,8 @@ class Mat4InverseTest : public ::testing::Test {
     }
 
     // Helper function to check if A * A^(-1) ≈ I
-    static bool verify_inverse(const mat4f& matrix, const mat4f& inverse, float epsilon = EPSILON) {
+    static bool verify_inverse(const mat4f& matrix, const mat4f& inverse, float epsilon = EPSILON)
+    {
         mat4f product        = matrix * inverse;
         mat4f identity_check = identity<float, 4>();
 
@@ -54,7 +57,8 @@ class Mat4InverseTest : public ::testing::Test {
     mat4f identity_mat, scale_mat, translation_mat, general_mat, singular_mat;
 };
 
-TEST_F(Mat4InverseTest, IdentityMatrixInverse) {
+TEST_F(Mat4InverseTest, IdentityMatrixInverse)
+{
     mat4f inv = inverse(identity_mat);
 
     // Inverse of identity should be identity
@@ -64,7 +68,8 @@ TEST_F(Mat4InverseTest, IdentityMatrixInverse) {
     EXPECT_TRUE(verify_inverse(identity_mat, inv));
 }
 
-TEST_F(Mat4InverseTest, DiagonalMatrixInverse) {
+TEST_F(Mat4InverseTest, DiagonalMatrixInverse)
+{
     mat4f inv = inverse(scale_mat);
 
     // Expected inverse: diagonal elements should be reciprocals
@@ -85,7 +90,8 @@ TEST_F(Mat4InverseTest, DiagonalMatrixInverse) {
     EXPECT_NEAR(inv(3, 3), 1.0f, EPSILON);
 }
 
-TEST_F(Mat4InverseTest, TranslationMatrixInverse) {
+TEST_F(Mat4InverseTest, TranslationMatrixInverse)
+{
     mat4f inv = inverse(translation_mat);
 
     // Translation inverse should negate the translation part
@@ -105,7 +111,8 @@ TEST_F(Mat4InverseTest, TranslationMatrixInverse) {
     EXPECT_NEAR(inv(2, 3), 2.0f, EPSILON);
 }
 
-TEST_F(Mat4InverseTest, GeneralMatrixInverse) {
+TEST_F(Mat4InverseTest, GeneralMatrixInverse)
+{
     mat4f inv = inverse(general_mat);
 
     // Verify A * A^(-1) = I (this is the key test for general matrices)
@@ -117,7 +124,8 @@ TEST_F(Mat4InverseTest, GeneralMatrixInverse) {
     EXPECT_TRUE(almost_equal(product_reverse, identity_check, EPSILON));
 }
 
-TEST_F(Mat4InverseTest, SingularMatrixThrows) {
+TEST_F(Mat4InverseTest, SingularMatrixThrows)
+{
     // Singular matrix should throw exception
     EXPECT_THROW(inverse(singular_mat), std::invalid_argument);
 
@@ -135,7 +143,8 @@ TEST_F(Mat4InverseTest, SingularMatrixThrows) {
     EXPECT_THROW(inverse(one_zero_row), std::invalid_argument);
 }
 
-TEST_F(Mat4InverseTest, RotationMatrixInverse) {
+TEST_F(Mat4InverseTest, RotationMatrixInverse)
+{
     // Create a rotation matrix around Z-axis (90 degrees)
     float angle    = pi<float> / 2.0f; // 90 degrees
     mat4f rotation = rotation_z(angle);
@@ -149,14 +158,17 @@ TEST_F(Mat4InverseTest, RotationMatrixInverse) {
     mat4f rotation_transpose = transpose(rotation);
 
     // Check that the rotation part (3x3) of inverse equals transpose
-    for (std::size_t i = 0; i < 3; ++i) {
-        for (std::size_t j = 0; j < 3; ++j) {
+    for (std::size_t i = 0; i < 3; ++i)
+    {
+        for (std::size_t j = 0; j < 3; ++j)
+        {
             EXPECT_NEAR(inv(i, j), rotation_transpose(i, j), EPSILON);
         }
     }
 }
 
-TEST_F(Mat4InverseTest, TransformationMatrixInverse) {
+TEST_F(Mat4InverseTest, TransformationMatrixInverse)
+{
     // Create a complex transformation: translation + rotation + scaling
     vec3f trans_vec{ 2.0f, -1.0f, 3.0f };
     vec3f scale_vec{ 0.5f, 2.0f, 1.5f };
@@ -178,7 +190,8 @@ TEST_F(Mat4InverseTest, TransformationMatrixInverse) {
     EXPECT_TRUE(almost_equal(original_point, back_to_original, EPSILON * 10));
 }
 
-TEST_F(Mat4InverseTest, DoublePrecisionInverse) {
+TEST_F(Mat4InverseTest, DoublePrecisionInverse)
+{
     // Test with double precision
     mat4d double_mat{
         1.0, 2.0, 0.0, 1.0, //
@@ -196,7 +209,8 @@ TEST_F(Mat4InverseTest, DoublePrecisionInverse) {
     EXPECT_TRUE(almost_equal(product, identity_d, EPSILON_D * 100));
 }
 
-TEST_F(Mat4InverseTest, ConstexprInverse) {
+TEST_F(Mat4InverseTest, ConstexprInverse)
+{
     // Test compile-time inverse computation
     constexpr mat4f const_scale{
         2, 0, 0, 0, //
@@ -220,7 +234,8 @@ TEST_F(Mat4InverseTest, ConstexprInverse) {
     EXPECT_NEAR(const_inv(3, 3), 1.0f, EPSILON);
 }
 
-TEST_F(Mat4InverseTest, OrthogonalMatrixInverse) {
+TEST_F(Mat4InverseTest, OrthogonalMatrixInverse)
+{
     // Create an orthogonal matrix (rotation)
     mat4f ortho{
         0,  1, 0, 0, //
@@ -238,7 +253,8 @@ TEST_F(Mat4InverseTest, OrthogonalMatrixInverse) {
     EXPECT_TRUE(verify_inverse(ortho, inv));
 }
 
-TEST_F(Mat4InverseTest, NearSingularMatrix) {
+TEST_F(Mat4InverseTest, NearSingularMatrix)
+{
     // Test with a matrix that's close to singular but still invertible
     mat4f near_singular{
         1, 2, 3, 4,      //
@@ -255,7 +271,8 @@ TEST_F(Mat4InverseTest, NearSingularMatrix) {
     EXPECT_TRUE(verify_inverse(near_singular, inv, EPSILON * 1000));
 }
 
-TEST_F(Mat4InverseTest, UpperTriangularMatrix) {
+TEST_F(Mat4InverseTest, UpperTriangularMatrix)
+{
     mat4f upper_tri{
         2, 1, 3, 4, //
         0, 3, 2, 1, //
@@ -275,7 +292,8 @@ TEST_F(Mat4InverseTest, UpperTriangularMatrix) {
     EXPECT_NEAR(inv(3, 2), 0.0f, EPSILON);
 }
 
-TEST_F(Mat4InverseTest, LowerTriangularMatrix) {
+TEST_F(Mat4InverseTest, LowerTriangularMatrix)
+{
     mat4f lower_tri{
         2, 0, 0, 0, //
         1, 3, 0, 0, //
@@ -295,7 +313,8 @@ TEST_F(Mat4InverseTest, LowerTriangularMatrix) {
     EXPECT_NEAR(inv(2, 3), 0.0f, EPSILON);
 }
 
-TEST_F(Mat4InverseTest, InverseOfInverse) {
+TEST_F(Mat4InverseTest, InverseOfInverse)
+{
     // Test that (A^(-1))^(-1) = A
     mat4f inv1 = inverse(general_mat);
     mat4f inv2 = inverse(inv1);
@@ -303,7 +322,8 @@ TEST_F(Mat4InverseTest, InverseOfInverse) {
     EXPECT_TRUE(almost_equal(inv2, general_mat, EPSILON * 10));
 }
 
-TEST_F(Mat4InverseTest, DeterminantConsistency) {
+TEST_F(Mat4InverseTest, DeterminantConsistency)
+{
     // Test that det(A^(-1)) = 1/det(A)
     float det_original = det(general_mat);
     mat4f inv          = inverse(general_mat);
@@ -312,7 +332,8 @@ TEST_F(Mat4InverseTest, DeterminantConsistency) {
     EXPECT_NEAR(det_inverse * det_original, 1.0f, EPSILON * 10);
 }
 
-TEST_F(Mat4InverseTest, LookAtMatrixInverse) {
+TEST_F(Mat4InverseTest, LookAtMatrixInverse)
+{
     // Test inverse of a look-at matrix
     vec3f eye{ 5.0f, 3.0f, 2.0f };
     vec3f center{ 0.0f, 0.0f, 0.0f };
@@ -331,10 +352,12 @@ TEST_F(Mat4InverseTest, LookAtMatrixInverse) {
     EXPECT_TRUE(almost_equal(world_point, back_to_world, EPSILON * 10));
 }
 
-TEST_F(Mat4InverseTest, StressTest) {
+TEST_F(Mat4InverseTest, StressTest)
+{
     // Test multiple random-ish matrices for robustness
-    for (int i = 1; i <= 10; ++i) {
-        float scale = static_cast<float>(i);
+    for (int i = 1; i <= 10; ++i)
+    {
+        auto scale = static_cast<float>(i);
 
         mat4f test_matrix{
             scale,     2 * scale, 0,         scale,     //

@@ -11,6 +11,7 @@ set(LINA_LIBRARY_NAME lina)
 add_subdirectory(lina)
 
 if (LINA_BUILD_TESTS)
+    message(STATUS "Building tests is enabled.")
     include(CTest)   # Enables testing functionality
     enable_testing() # Required so `ctest` can discover tests
 
