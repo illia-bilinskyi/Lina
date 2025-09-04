@@ -51,6 +51,7 @@ jobs:
           -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -DCMAKE_CXX_STANDARD=${{ matrix.cpp_standard }}
+          -DLINA_BUILD_TESTS=ON
           -S ${{ github.workspace }}
 
       - name: Build
@@ -58,4 +59,4 @@ jobs:
 
       - name: Test
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
-        run: ctest --build-config ${{ matrix.build_type }}
+        run: ctest --verbose --build-config ${{ matrix.build_type }}

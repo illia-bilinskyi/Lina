@@ -9,6 +9,8 @@ namespace lina
 template <typename T, std::size_t R, std::size_t C>
 struct mat
 {
+    static_assert(std::is_arithmetic_v<T>, "Matrix supports only arithmetic types.");
+
     T a[R * C]{0}; // column-major: index = c*R + r
 
     static constexpr std::size_t rows = R;
@@ -199,6 +201,8 @@ struct mat
 template <typename T>
 struct vec3
 {
+    static_assert(std::is_arithmetic_v<T>, "Vector supports only arithmetic types.");
+
     union {
         T a[3]{};
 
@@ -351,10 +355,15 @@ constexpr T pi = static_cast<T>(3.141592653589793L);
 // ========================= Comparison =========================
 
 template <typename T>
+constexpr std::enable_if_t<std::is_arithmetic_v<T>, T> abs(T x) noexcept
+{
+    return x < T(0) ? -x : x;
+}
+
+template <typename T>
 constexpr bool almost_equal(T a, T b, T eps = COMPARE_EPSILON_DEFAULT<T>)
 {
-    // TODO: create constexpr implementation of fabs
-    return std::fabs(a - b) <= eps;
+    return abs(a - b) <= eps;
 }
 
 template <typename T, std::size_t R, std::size_t C>
@@ -483,17 +492,53 @@ constexpr mat<T, 3, 3> c_inverse(const mat<T, 3, 3>& M)
 }
 
 template <typename T>
-mat<T, 2, 2> inverse(const mat<T, 2, 2>& M)
+constexpr T det3x3(T a00, T a01, T a02, T a10, T a11, T a12, T a20, T a21, T a22)
 {
-    if (T d = det(M); almost_zero(d))
-        throw std::invalid_argument("inverse matrix require non-zero determinant!");
-
-    return c_inverse(M);
+    return a00 * (a11 * a22 - a12 * a21) - a01 * (a10 * a22 - a12 * a20) + a02 * (a10 * a21 - a11 * a20);
 }
 
 template <typename T>
-mat<T, 3, 3> inverse(const mat<T, 3, 3>& M)
+constexpr mat<T, 4, 4> c_inverse(const mat<T, 4, 4>& M)
 {
+    // Compute all cofactors for the adjugate matrix
+    T c00 = det3x3(M(1, 1), M(1, 2), M(1, 3), M(2, 1), M(2, 2), M(2, 3), M(3, 1), M(3, 2), M(3, 3));
+    T c01 = -det3x3(M(1, 0), M(1, 2), M(1, 3), M(2, 0), M(2, 2), M(2, 3), M(3, 0), M(3, 2), M(3, 3));
+    T c02 = det3x3(M(1, 0), M(1, 1), M(1, 3), M(2, 0), M(2, 1), M(2, 3), M(3, 0), M(3, 1), M(3, 3));
+    T c03 = -det3x3(M(1, 0), M(1, 1), M(1, 2), M(2, 0), M(2, 1), M(2, 2), M(3, 0), M(3, 1), M(3, 2));
+
+    T c10 = -det3x3(M(0, 1), M(0, 2), M(0, 3), M(2, 1), M(2, 2), M(2, 3), M(3, 1), M(3, 2), M(3, 3));
+    T c11 = det3x3(M(0, 0), M(0, 2), M(0, 3), M(2, 0), M(2, 2), M(2, 3), M(3, 0), M(3, 2), M(3, 3));
+    T c12 = -det3x3(M(0, 0), M(0, 1), M(0, 3), M(2, 0), M(2, 1), M(2, 3), M(3, 0), M(3, 1), M(3, 3));
+    T c13 = det3x3(M(0, 0), M(0, 1), M(0, 2), M(2, 0), M(2, 1), M(2, 2), M(3, 0), M(3, 1), M(3, 2));
+
+    T c20 = det3x3(M(0, 1), M(0, 2), M(0, 3), M(1, 1), M(1, 2), M(1, 3), M(3, 1), M(3, 2), M(3, 3));
+    T c21 = -det3x3(M(0, 0), M(0, 2), M(0, 3), M(1, 0), M(1, 2), M(1, 3), M(3, 0), M(3, 2), M(3, 3));
+    T c22 = det3x3(M(0, 0), M(0, 1), M(0, 3), M(1, 0), M(1, 1), M(1, 3), M(3, 0), M(3, 1), M(3, 3));
+    T c23 = -det3x3(M(0, 0), M(0, 1), M(0, 2), M(1, 0), M(1, 1), M(1, 2), M(3, 0), M(3, 1), M(3, 2));
+
+    T c30 = -det3x3(M(0, 1), M(0, 2), M(0, 3), M(1, 1), M(1, 2), M(1, 3), M(2, 1), M(2, 2), M(2, 3));
+    T c31 = det3x3(M(0, 0), M(0, 2), M(0, 3), M(1, 0), M(1, 2), M(1, 3), M(2, 0), M(2, 2), M(2, 3));
+    T c32 = -det3x3(M(0, 0), M(0, 1), M(0, 3), M(1, 0), M(1, 1), M(1, 3), M(2, 0), M(2, 1), M(2, 3));
+    T c33 = det3x3(M(0, 0), M(0, 1), M(0, 2), M(1, 0), M(1, 1), M(1, 2), M(2, 0), M(2, 1), M(2, 2));
+
+    // Compute determinant using first row
+    T determinant = M(0, 0) * c00 + M(0, 1) * c01 + M(0, 2) * c02 + M(0, 3) * c03;
+
+    // Create adjugate matrix (transpose of cofactor matrix) divided by determinant
+    // clang-format off
+    return mat<T, 4, 4>{
+        c00/determinant, c10/determinant, c20/determinant, c30/determinant,
+        c01/determinant, c11/determinant, c21/determinant, c31/determinant,
+        c02/determinant, c12/determinant, c22/determinant, c32/determinant,
+        c03/determinant, c13/determinant, c23/determinant, c33/determinant
+    };
+    // clang-format on
+}
+
+template <typename T, std::size_t N>
+mat<T, N, N> inverse(const mat<T, N, N>& M)
+{
+    static_assert(N <= 4 && N >= 2, "Inverse matrix calculation is implemented only for N=2,3,4.");
     if (T d = det(M); almost_zero(d))
         throw std::invalid_argument("inverse matrix require non-zero determinant!");
 
@@ -572,12 +617,12 @@ constexpr vec3<T> operator*(const mat3<T>& m, const vec3<T>& v)
 template <typename T>
 constexpr vec3<T> operator*(const mat4<T>& m, const vec3<T>& v)
 {
-    mat<T, 4, 1> _v{v[0], v[1], v[2], T(1)};
-    auto result = m * _v;
-    const T& w  = result(3, 0);
+    mat<T, 4, 1> _v{v[0], v[1], v[2], T{1}};
+    mat<T, 4, 1> result = m * _v;
+    const T& w          = result(3, 0);
     if (almost_zero(w))
         return {};
-    return vec3<T>{result(0, 0) / w, result(1, 0) / w, result(2, 0) / w};
+    return vec3<T>{result(0) / w, result(1) / w, result(2) / w};
 }
 
 template <typename T>
@@ -590,12 +635,12 @@ constexpr vec3<T> operator*(const vec3<T>& v, const mat3<T>& m)
 template <typename T>
 constexpr vec3<T> operator*(const vec3<T>& v, const mat4<T>& m)
 {
-    mat<T, 1, 4> _v{v[0], v[1], v[2], T(1)};
+    mat<T, 1, 4> _v{v[0], v[1], v[2], T{1}};
     mat<T, 1, 4> result = _v * m;
     const T& w          = result(0, 3);
     if (almost_zero(w))
         return {};
-    return vec3<T>{result(0, 0) / w, result(0, 1) / w, result(0, 2) / w};
+    return vec3<T>{result(0) / w, result(1) / w, result(2) / w};
 }
 
 // ========================= 3D Transforms (mat4) =========================
@@ -723,11 +768,11 @@ mat4<T> rotation(T alpha, T beta, T gamma)
 template <typename T>
 bool is_rotation_valid(const mat3<T>& rot)
 {
-    if (bool almost_zero_ = almost_zero(rot))
+    if (almost_zero(rot))
         return false;
 
     T determinant = det(rot);
-    if (bool det_almost_zero = almost_zero(determinant))
+    if (almost_zero(determinant))
         return false;
 
     bool is_orthogonal      = almost_equal(c_inverse(rot), transpose(rot));
@@ -795,4 +840,51 @@ mat4<T> inverse_transform(const mat4<T>& transform)
     auto inv_s = scale(vec3<T>{1 / s.x, 1 / s.y, 1 / s.z});
     return inv_s * inv_r * inv_t;
 }
+
+// ========================= Camera (mat4) =========================
+
+template <typename T>
+mat4<T> look_at(const vec3<T>& eye, const vec3<T>& center, const vec3<T>& up)
+{
+    // clang-format off
+    vec3<T> f = normalize(center - eye);  // Direction camera is looking
+    vec3<T> r = normalize(cross(f, up));  // Camera's right
+    vec3<T> u = cross(r, f);  // Camera's up (recomputed for orthogonality)
+
+    // Create translation part (negative because we're moving the world, not the camera)
+    vec3<T> t{-dot(r, eye), -dot(u, eye), dot(f, eye)};
+
+    return transpose(mat4<T>{
+        r.x,     u.x,     -f.x,     T{0},
+        r.y,     u.y,     -f.y,     T{0},
+        r.z,     u.z,     -f.z,     T{0},
+        t.x,     t.y,      t.z,     T{1}
+    });
+    // clang-format on
+}
+
+template <typename T>
+constexpr vec3<T> right_vec(const mat4<T>& view)
+{
+    return {view.template get<0, 0>(), view.template get<0, 1>(), view.template get<0, 2>()};
+}
+
+template <typename T>
+constexpr vec3<T> up_vec(const mat4<T>& view)
+{
+    return {view.template get<1, 0>(), view.template get<1, 1>(), view.template get<1, 2>()};
+}
+
+template <typename T>
+constexpr vec3<T> forward_vec(const mat4<T>& view)
+{
+    return {-view.template get<2, 0>(), -view.template get<2, 1>(), -view.template get<2, 2>()};
+}
+
+template <typename T>
+constexpr vec3<T> translation_vec(const mat4<T>& view)
+{
+    return {view.template get<3, 0>(), view.template get<3, 1>(), view.template get<3, 2>()};
+}
+
 } // namespace lina

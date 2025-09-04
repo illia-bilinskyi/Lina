@@ -1,4 +1,4 @@
-#include "lina.h"
+#include "lina/lina.h"
 #include <cmath>
 #include <gtest/gtest.h>
 
