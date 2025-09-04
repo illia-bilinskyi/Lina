@@ -112,15 +112,6 @@ TEST_F(VectorTest, GetTemplated)
     EXPECT_EQ(v.get<2>(), 3.0f);
 }
 
-TEST_F(VectorTest, FunctionCallOperator)
-{
-    constexpr vec3f v{ 1.0f, 2.0f, 3.0f };
-
-    EXPECT_EQ(v(0), 1.0f);
-    EXPECT_EQ(v(1), 2.0f);
-    EXPECT_EQ(v(2), 3.0f);
-}
-
 TEST_F(VectorTest, DataAccess)
 {
     vec3f v{ 1.0f, 2.0f, 3.0f };
@@ -129,15 +120,6 @@ TEST_F(VectorTest, DataAccess)
     EXPECT_EQ(data[0], 1.0f);
     EXPECT_EQ(data[1], 2.0f);
     EXPECT_EQ(data[2], 3.0f);
-}
-
-TEST_F(VectorTest, UnionAccess)
-{
-    constexpr vec3f v{ 1.0f, 2.0f, 3.0f };
-
-    EXPECT_EQ(v.x, v.a[0]);
-    EXPECT_EQ(v.y, v.a[1]);
-    EXPECT_EQ(v.z, v.a[2]);
 }
 
 TEST_F(VectorTest, UnaryPlus)

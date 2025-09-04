@@ -11,7 +11,7 @@ struct mat
 {
     static_assert(std::is_arithmetic_v<T>, "Matrix supports only arithmetic types.");
 
-    T a[R * C]{ 0 }; // column-major: index = c*R + r
+    T a[R * C]{ 0 };
 
     static constexpr std::size_t rows = R;
     static constexpr std::size_t cols = C;
@@ -22,23 +22,27 @@ struct mat
     // Fill constructor
     constexpr explicit mat(T fill)
     {
-        for (std::size_t i = 0; i < R * C; i++)
-            a[i] = fill;
+        for (std::size_t i = 0; i < R; i++)
+            for (std::size_t j = 0; j < C; j++)
+                operator()(i, j) = fill;
     }
 
     template <typename... Args, typename = std::enable_if_t<sizeof...(Args) == R * C>>
     constexpr mat(Args... args)
     {
         std::size_t i = 0;
-        ((a[i++] = args), ...);
+        ((operator[](i++) = args), ...);
     }
 
     constexpr mat(std::initializer_list<mat<T, 1, C>> rows)
     {
         std::size_t i = 0;
         for (auto row : rows)
-            for (auto val : row.a)
-                a[i++] = val;
+        {
+            for (std::size_t j = 0; j < C; j++)
+                operator()(i, j) = row(j);
+            i++;
+        }
     }
 
     // Copy constructor for square matrices
@@ -50,14 +54,15 @@ struct mat
         // Copy overlapping part
         for (std::size_t i = 0; i < minSize; i++)
             for (std::size_t j = 0; j < minSize; j++)
-                (*this)(i, j) = m(i, j);
+                operator()(i, j) = m(i, j);
     }
 
     template <typename T2>
     constexpr explicit mat(const mat<T2, R, C>& m)
     {
-        for (std::size_t i = 0; i < R * C; i++)
-            a[i] = static_cast<T>(m[i]);
+        for (std::size_t i = 0; i < R; i++)
+            for (std::size_t j = 0; j < C; j++)
+                operator()(i, j) = static_cast<T>(m(i, j));
     }
 
     template <std::size_t r, std::size_t c>
@@ -65,7 +70,7 @@ struct mat
     {
         static_assert(r < R, "Row index out of bounds");
         static_assert(c < C, "Column index out of bounds");
-        return this->operator()(r, c);
+        return operator()(r, c);
     }
 
     template <std::size_t r, std::size_t c>
@@ -73,8 +78,11 @@ struct mat
     {
         static_assert(r < R, "Row index out of bounds");
         static_assert(c < C, "Column index out of bounds");
-        return this->operator()(r, c);
+        return operator()(r, c);
     }
+
+    constexpr T* data() { return a; }
+    constexpr const T* data() const { return a; }
 
     constexpr T& operator()(std::size_t r, std::size_t c) { return a[c + r * C]; }
     constexpr const T& operator()(std::size_t r, std::size_t c) const { return a[c + r * C]; }
@@ -84,23 +92,20 @@ struct mat
     constexpr T& operator()(std::size_t i)
     {
         static_assert(R == 1 || C == 1);
-        return a[i];
+        return operator[](i);
     }
 
     constexpr const T& operator()(std::size_t i) const
     {
         static_assert(R == 1 || C == 1);
-        return a[i];
+        return operator[](i);
     }
-
-    constexpr T* data() { return a; }
-    constexpr const T* data() const { return a; }
 
     constexpr mat<T, R, 1> col(std::size_t c) const
     {
         mat<T, R, 1> result{};
         for (std::size_t i = 0; i < R; i++)
-            result(i) = (*this)(i, c);
+            result(i) = operator()(i, c);
         return result;
     }
 
@@ -108,7 +113,7 @@ struct mat
     {
         mat<T, 1, C> result{};
         for (std::size_t i = 0; i < C; i++)
-            result(i) = (*this)(r, i);
+            result(i) = operator()(r, i);
         return result;
     }
 
@@ -133,8 +138,9 @@ struct mat
     constexpr mat operator-() const
     {
         mat res{};
-        for (std::size_t i = 0; i < R * C; i++)
-            res[i] = -a[i];
+        for (std::size_t i = 0; i < R; i++)
+            for (std::size_t j = 0; j < C; j++)
+                res(i, j) = -operator()(i, j);
         return res;
     }
 
@@ -143,8 +149,9 @@ struct mat
     constexpr mat operator*(T s) const
     {
         mat res{};
-        for (std::size_t i = 0; i < R * C; i++)
-            res[i] = a[i] * s;
+        for (std::size_t i = 0; i < R; i++)
+            for (std::size_t j = 0; j < C; j++)
+                res(i, j) = operator()(i, j) * s;
         return res;
     }
 
@@ -157,8 +164,9 @@ struct mat
     constexpr mat operator+(const mat& other) const
     {
         mat res{};
-        for (std::size_t i = 0; i < R * C; i++)
-            res[i] = a[i] + other[i];
+        for (std::size_t i = 0; i < R; i++)
+            for (std::size_t j = 0; j < C; j++)
+                res(i, j) = operator()(i, j) + other(i, j);
         return res;
     }
 
@@ -191,35 +199,34 @@ struct vec3
 {
     static_assert(std::is_arithmetic_v<T>, "Vector supports only arithmetic types.");
 
-    union
-    {
-        T a[3]{};
-
-        struct
-        {
-            T x, y, z;
-        };
-    };
+    T x, y, z;
 
     constexpr vec3()
-        : a{ T{ 0 }, T{ 0 }, T{ 0 } }
+        : x{ 0 }
+        , y{ 0 }
+        , z{ 0 }
     {}
 
     constexpr vec3(T x_, T y_, T z_)
-        : a{ x_, y_, z_ }
+        : x{ x_ }
+        , y{ y_ }
+        , z{ z_ }
     {}
 
     // Fill constructor
     constexpr explicit vec3(T value)
-        : a{ value, value, value }
+        : x{ value }
+        , y{ value }
+        , z{ value }
     {}
 
     constexpr vec3(std::initializer_list<T> init)
+        : vec3()
     {
         auto it = init.begin();
-        a[0]    = (it != init.end()) ? *it++ : T{ 0 };
-        a[1]    = (it != init.end()) ? *it++ : T{ 0 };
-        a[2]    = (it != init.end()) ? *it : T{ 0 };
+        x       = (it != init.end()) ? *it++ : T{ 0 };
+        y       = (it != init.end()) ? *it++ : T{ 0 };
+        z       = (it != init.end()) ? *it : T{ 0 };
     }
 
     // Copy constructor
@@ -229,8 +236,8 @@ struct vec3
     constexpr vec3& operator=(const vec3& other) = default;
 
     // Conversion operator into matrix
-    constexpr explicit operator mat<T, 3, 1>() const { return mat<T, 3, 1>{ a[0], a[1], a[2] }; }
-    constexpr explicit operator mat<T, 1, 3>() const { return mat<T, 1, 3>{ a[0], a[1], a[2] }; }
+    constexpr explicit operator mat<T, 3, 1>() const { return mat<T, 3, 1>{ x, y, z }; }
+    constexpr explicit operator mat<T, 1, 3>() const { return mat<T, 1, 3>{ x, y, z }; }
 
     constexpr explicit vec3(const mat<T, 1, 3>& m)
         : vec3(m(0), m(1), m(2))
@@ -242,46 +249,44 @@ struct vec3
 
     template <typename T2>
     constexpr vec3(const vec3<T2>& other)
-    {
-        for (std::size_t i = 0; i < 3; i++)
-            a[i] = static_cast<T>(other[i]);
-    }
+        : x{ static_cast<T>(other.x) }
+        , y{ static_cast<T>(other.y) }
+        , z{ static_cast<T>(other.z) }
+    {}
+
+    T* data() { return &x; }
+    const T* data() const { return &x; }
 
     template <std::size_t i>
     constexpr T& get()
     {
         static_assert(i < 3, "Index out of bounds");
-        return a[i];
+        return data()[i];
     }
 
     template <std::size_t i>
     constexpr const T& get() const
     {
         static_assert(i < 3, "Index out of bounds");
-        return a[i];
+        return data()[i];
     }
 
-    constexpr T& operator()(std::size_t i) { return a[i]; }
-    constexpr const T& operator()(std::size_t i) const { return a[i]; }
-    constexpr T& operator[](std::size_t i) { return a[i]; }
-    constexpr const T& operator[](std::size_t i) const { return a[i]; }
-
-    T* data() { return a; }
-    const T* data() const { return a; }
+    constexpr T& operator[](std::size_t i) { return *(&x + i); }
+    constexpr const T& operator[](const std::size_t i) const { return *(&x + i); }
 
     // ===== Unary Arithmetic Operations =====
 
     constexpr vec3 operator+() const { return *this; }
-    constexpr vec3 operator-() const { return { -a[0], -a[1], -a[2] }; }
+    constexpr vec3 operator-() const { return { -x, -y, -z }; }
 
     // ===== Binary Arithmetic Operations (vector + vector) =====
 
-    constexpr vec3 operator+(const vec3& other) const { return { a[0] + other[0], a[1] + other[1], a[2] + other[2] }; }
+    constexpr vec3 operator+(const vec3& other) const { return { x + other.x, y + other.y, z + other.z }; }
     constexpr vec3 operator-(const vec3& other) const { return *this + (-other); }
 
     // ===== Binary Arithmetic Operations (vector + scalar) =====
 
-    constexpr vec3 operator*(T scalar) const { return { a[0] * scalar, a[1] * scalar, a[2] * scalar }; }
+    constexpr vec3 operator*(T scalar) const { return { x * scalar, y * scalar, z * scalar }; }
     constexpr vec3 operator/(T scalar) const { return *this * (T{ 1 } / scalar); }
 
     // ===== Compound Assignment Operations (vector + vector) =====
@@ -518,15 +523,15 @@ mat<T, N, N> inverse(const mat<T, N, N>& M)
 template <typename T>
 constexpr T dot(const vec3<T>& a, const vec3<T>& b)
 {
-    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
 template <typename T>
 constexpr vec3<T> cross(const vec3<T>& a, const vec3<T>& b)
 {
-    return vec3<T>{ a[1] * b[2] - a[2] * b[1], //
-                    a[2] * b[0] - a[0] * b[2], //
-                    a[0] * b[1] - a[1] * b[0] };
+    return vec3<T>{ a.y * b.z - a.z * b.y, //
+                    a.z * b.x - a.x * b.z, //
+                    a.x * b.y - a.y * b.x };
 }
 
 template <typename T>
@@ -565,7 +570,7 @@ T distance(const vec3<T> a, const vec3<T> b)
 template <typename T>
 constexpr mat<T, 1, 4> to_homogeneous(const vec3<T>& v, T w = T(1))
 {
-    return { v[0], v[1], v[2], w };
+    return { v.x, v.y, v.z, w };
 }
 
 template <typename T>
@@ -585,7 +590,7 @@ constexpr vec3<T> operator*(const mat3<T>& m, const vec3<T>& v)
 template <typename T>
 constexpr vec3<T> operator*(const mat4<T>& m, const vec3<T>& v)
 {
-    mat<T, 4, 1> _v{ v[0], v[1], v[2], T{ 1 } };
+    mat<T, 4, 1> _v{ v.x, v.y, v.z, T{ 1 } };
     mat<T, 4, 1> result = m * _v;
     const T& w          = result(3, 0);
     if (almost_zero(w))
@@ -603,7 +608,7 @@ constexpr vec3<T> operator*(const vec3<T>& v, const mat3<T>& m)
 template <typename T>
 constexpr vec3<T> operator*(const vec3<T>& v, const mat4<T>& m)
 {
-    mat<T, 1, 4> _v{ v[0], v[1], v[2], T{ 1 } };
+    mat<T, 1, 4> _v{ v.x, v.y, v.z, T{ 1 } };
     mat<T, 1, 4> result = _v * m;
     const T& w          = result(0, 3);
     if (almost_zero(w))
@@ -778,7 +783,7 @@ mat3<T> get_rotation(const mat4<T>& t)
     mat3<T> rot{};
     for (std::size_t r = 0; r < 3; r++)
         for (std::size_t c = 0; c < 3; c++)
-            rot(r, c) = t(r, c) / s(c);
+            rot(r, c) = t(r, c) / s[c];
     if (!is_rotation_valid(rot))
         throw std::invalid_argument("the rotation matrix is invalid");
     return rot;
@@ -852,5 +857,26 @@ constexpr vec3<T> translation_vec(const mat4<T>& view)
 {
     return { view.template get<3, 0>(), view.template get<3, 1>(), view.template get<3, 2>() };
 }
+
+template <typename T>
+constexpr mat4<T> ortho(T left, T right, T bottom, T top, T near, T far)
+{
+    mat4<T> result{};
+
+    result(0, 0) = T{ 2 } / (right - left);
+    result(1, 1) = T{ 2 } / (top - bottom);
+    result(2, 2) = -T{ 2 } / (far - near);
+
+    result(0, 3) = -(right + left) / (right - left);
+    result(1, 3) = -(top + bottom) / (top - bottom);
+    result(2, 3) = -(far + near) / (far - near);
+
+    result(3, 3) = T{ 1 };
+
+    return result;
+}
+template <typename T>
+constexpr mat4<T> perspective(T fovy, T aspepct, T near, T far)
+{}
 
 } // namespace lina
