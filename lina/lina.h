@@ -875,8 +875,35 @@ constexpr mat4<T> ortho(T left, T right, T bottom, T top, T near, T far)
 
     return result;
 }
+
+/**
+ * @tparam T
+ * @param fovy field of view in Y direction (radians)
+ * @param aspect aspect ratio (width/height)
+ * @param near distance to near clipping plane
+ * @param far distance to far clipping plane
+ * @return
+ */
 template <typename T>
-constexpr mat4<T> perspective(T fovy, T aspepct, T near, T far)
-{}
+mat4<T> perspective(T fovy, T aspect, T near, T far)
+{
+    T tan_half_fovy = std::tan(fovy / T{ 2 });
+
+    mat4<T> result{};
+
+    result(0, 0) = T{ 1 } / (aspect * tan_half_fovy);
+    result(1, 1) = T{ 1 } / tan_half_fovy;
+    result(2, 2) = -(far + near) / (far - near);
+    result(2, 3) = -(T{ 2 } * far * near) / (far - near);
+    result(3, 2) = -T{ 1 };
+
+    return result;
+}
+
+template <typename T>
+constexpr T radians(T degrees)
+{
+    return degrees * pi<T> / T{ 180 };
+}
 
 } // namespace lina

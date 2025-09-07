@@ -635,3 +635,316 @@ TEST_F(OrthoProjectionTest, InverseProperty) {
 
     EXPECT_TRUE(almost_equal(original, back_to_original, EPSILON * 10));
 }
+
+class PerspectiveProjectionTest : public ::testing::Test {
+protected:
+    void SetUp() override {
+        // Common test parameters
+        fov_45 = pi<float> / 4.0f;  // 45 degrees in radians
+        aspect_ratio = 16.0f / 9.0f;
+        near_plane = 0.1f;
+        far_plane = 100.0f;
+
+        // Standard perspective matrix
+        persp_matrix = perspective(fov_45, aspect_ratio, near_plane, far_plane);
+
+        // Square aspect ratio for simpler calculations
+        persp_square = perspective(fov_45, 1.0f, 1.0f, 10.0f);
+    }
+
+    float fov_45, aspect_ratio, near_plane, far_plane;
+    mat4f persp_matrix, persp_square;
+};
+
+TEST_F(PerspectiveProjectionTest, MatrixStructure) {
+    float tan_half_fov = std::tan(fov_45 / 2.0f);
+
+    // Test the key matrix elements
+    EXPECT_NEAR(persp_matrix(0, 0), 1.0f / (aspect_ratio * tan_half_fov), EPSILON);
+    EXPECT_NEAR(persp_matrix(1, 1), 1.0f / tan_half_fov, EPSILON);
+    EXPECT_NEAR(persp_matrix(2, 2), -(far_plane + near_plane) / (far_plane - near_plane), EPSILON);
+    EXPECT_NEAR(persp_matrix(2, 3), -(2.0f * far_plane * near_plane) / (far_plane - near_plane), EPSILON);
+    EXPECT_NEAR(persp_matrix(3, 2), -1.0f, EPSILON);
+
+    // Test that other elements are zero
+    EXPECT_NEAR(persp_matrix(0, 1), 0.0f, EPSILON);
+    EXPECT_NEAR(persp_matrix(0, 2), 0.0f, EPSILON);
+    EXPECT_NEAR(persp_matrix(0, 3), 0.0f, EPSILON);
+    EXPECT_NEAR(persp_matrix(1, 0), 0.0f, EPSILON);
+    EXPECT_NEAR(persp_matrix(1, 2), 0.0f, EPSILON);
+    EXPECT_NEAR(persp_matrix(1, 3), 0.0f, EPSILON);
+    EXPECT_NEAR(persp_matrix(2, 0), 0.0f, EPSILON);
+    EXPECT_NEAR(persp_matrix(2, 1), 0.0f, EPSILON);
+    EXPECT_NEAR(persp_matrix(3, 0), 0.0f, EPSILON);
+    EXPECT_NEAR(persp_matrix(3, 1), 0.0f, EPSILON);
+    EXPECT_NEAR(persp_matrix(3, 3), 0.0f, EPSILON);
+}
+
+TEST_F(PerspectiveProjectionTest, PerspectiveDivide) {
+    // Test that the perspective divide works correctly
+    vec3f point{1.0f, 1.0f, -5.0f};
+    vec3f projected = persp_square * point;
+
+    // After perspective projection, we need to divide by w (which is -z)
+    float w = 5.0f;  // -(-5.0f)
+    float final_x = projected.x / w;
+    float final_y = projected.y / w;
+    float final_z = projected.z / w;
+
+    // Points farther away should have smaller final coordinates
+    EXPECT_LT(std::abs(final_x), 1.0f);
+    EXPECT_LT(std::abs(final_y), 1.0f);
+
+    // Test that closer points are larger
+    vec3f closer_point{1.0f, 1.0f, -2.0f};
+    vec3f closer_projected = persp_square * closer_point;
+    float closer_w = 2.0f;
+    float closer_final_x = closer_projected.x / closer_w;
+
+    EXPECT_GT(std::abs(closer_final_x), std::abs(final_x));
+}
+
+TEST_F(PerspectiveProjectionTest, NearFarPlaneMapping) {
+    // Test depth mapping at near and far planes
+
+    // Point at near plane
+    vec3f at_near{0.0f, 0.0f, -near_plane};
+    vec3f proj_near = persp_matrix * at_near;
+
+    // Point at far plane
+    vec3f at_far{0.0f, 0.0f, -far_plane};
+    vec3f proj_far = persp_matrix * at_far;
+
+    // Near plane should map to NDC z = -1
+    EXPECT_NEAR(proj_near.z, -1.0f, EPSILON * 10);
+
+    // Far plane should map to NDC z = 1
+    EXPECT_NEAR(proj_far.z, 1.0f, EPSILON * 10);
+}
+
+TEST_F(PerspectiveProjectionTest, CenterAxisPoints) {
+    // Points on the center axis (x=0, y=0) should remain on axis after projection
+    vec3f center_points[] = {
+        {0.0f, 0.0f, -1.0f},
+        {0.0f, 0.0f, -5.0f},
+        {0.0f, 0.0f, -50.0f}
+    };
+
+    for (const auto& point : center_points) {
+        vec3f projected = persp_matrix * point;
+        float w = -point.z;
+        float final_x = projected.x / w;
+        float final_y = projected.y / w;
+
+        EXPECT_NEAR(final_x, 0.0f, EPSILON);
+        EXPECT_NEAR(final_y, 0.0f, EPSILON);
+    }
+}
+
+TEST_F(PerspectiveProjectionTest, FieldOfViewEffects) {
+    // Test different FOV values
+    float fov_30 = radians(30.0f);
+    float fov_60 = radians(60.0f);
+    float fov_90 = radians(90.0f);
+
+    mat4f persp_30 = perspective(fov_30, 1.0f, 1.0f, 10.0f);
+    mat4f persp_60 = perspective(fov_60, 1.0f, 1.0f, 10.0f);
+    mat4f persp_90 = perspective(fov_90, 1.0f, 1.0f, 10.0f);
+
+    vec3f test_point{1.0f, 1.0f, -5.0f};
+
+    vec3f proj_30 = persp_30 * test_point;
+    vec3f proj_60 = persp_60 * test_point;
+    vec3f proj_90 = persp_90 * test_point;
+
+    float w = 5.0f;
+    float final_30_x = proj_30.x / w;
+    float final_60_x = proj_60.x / w;
+    float final_90_x = proj_90.x / w;
+
+    // Smaller FOV should produce larger projected coordinates (telephoto effect)
+    EXPECT_GT(std::abs(final_30_x), std::abs(final_60_x));
+    EXPECT_GT(std::abs(final_60_x), std::abs(final_90_x));
+}
+
+TEST_F(PerspectiveProjectionTest, AspectRatioEffects) {
+    // Test different aspect ratios
+    float aspect_1_1 = 1.0f;
+    float aspect_4_3 = 4.0f / 3.0f;
+    float aspect_16_9 = 16.0f / 9.0f;
+
+    mat4f persp_1_1 = perspective(fov_45, aspect_1_1, 1.0f, 10.0f);
+    mat4f persp_4_3 = perspective(fov_45, aspect_4_3, 1.0f, 10.0f);
+    mat4f persp_16_9 = perspective(fov_45, aspect_16_9, 1.0f, 10.0f);
+
+    vec3f test_point{2.0f, 1.0f, -5.0f};
+
+    vec3f proj_1_1 = persp_1_1 * test_point;
+    vec3f proj_4_3 = persp_4_3 * test_point;
+    vec3f proj_16_9 = persp_16_9 * test_point;
+
+    float w = 5.0f;
+    float final_1_1_x = proj_1_1.x / w;
+    float final_4_3_x = proj_4_3.x / w;
+    float final_16_9_x = proj_16_9.x / w;
+
+    // Higher aspect ratio should compress X coordinates
+    EXPECT_GT(std::abs(final_1_1_x), std::abs(final_4_3_x));
+    EXPECT_GT(std::abs(final_4_3_x), std::abs(final_16_9_x));
+
+    // Y coordinates should be the same (aspect only affects X)
+    float final_1_1_y = proj_1_1.y / w;
+    float final_4_3_y = proj_4_3.y / w;
+    float final_16_9_y = proj_16_9.y / w;
+
+    EXPECT_NEAR(final_1_1_y, final_4_3_y, EPSILON);
+    EXPECT_NEAR(final_4_3_y, final_16_9_y, EPSILON);
+}
+
+TEST_F(PerspectiveProjectionTest, DepthNonLinearity) {
+    // Test that perspective projection creates non-linear depth distribution
+
+    // Points at regular intervals
+    vec3f points[] = {
+        {0.0f, 0.0f, -4.0f},
+        {0.0f, 0.0f, -6.0f},
+        {0.0f, 0.0f, -8.0f},
+        {0.0f, 0.0f, -10.0f}
+    };
+
+    float ndc_z_values[4];
+
+    for (int i = 0; i < 4; ++i) {
+        vec3f projected = persp_square * points[i];
+        float w = -points[i].z;
+        ndc_z_values[i] = projected.z / w;
+    }
+
+    // Calculate intervals between consecutive NDC Z values
+    float interval1 = lina::abs(ndc_z_values[1] - ndc_z_values[0]);
+    float interval2 = lina::abs(ndc_z_values[2] - ndc_z_values[1]);
+    float interval3 = lina::abs(ndc_z_values[3] - ndc_z_values[2]);
+
+    // Intervals should decrease (non-linear distribution)
+    // More precision near the camera, less precision far away
+    EXPECT_GT(interval1, interval2);
+    EXPECT_GT(interval2, interval3);
+}
+
+TEST_F(PerspectiveProjectionTest, PerspectiveVsOrthographic) {
+    // Compare perspective projection with orthographic
+    mat4f ortho_proj = ortho(-2.0f, 2.0f, -2.0f, 2.0f, 1.0f, 10.0f);
+
+    // Same points at different depths
+    vec3f near_point{1.0f, 1.0f, -2.0f};
+    vec3f far_point{1.0f, 1.0f, -8.0f};
+
+    // Perspective projections
+    vec3f persp_near = persp_square * near_point;
+    vec3f persp_far = persp_square * far_point;
+
+    // Orthographic projections
+    vec3f ortho_near = ortho_proj * near_point;
+    vec3f ortho_far = ortho_proj * far_point;
+
+    // Apply perspective divide for perspective projection
+    float persp_near_x = persp_near.x / 2.0f;
+    float persp_far_x = persp_far.x / 8.0f;
+
+    // In perspective: far objects should be smaller
+    EXPECT_GT(std::abs(persp_near_x), std::abs(persp_far_x));
+
+    // In orthographic: objects should be the same size
+    EXPECT_NEAR(ortho_near.x, ortho_far.x, EPSILON);
+}
+
+TEST_F(PerspectiveProjectionTest, SymmetricFrustum) {
+    // Test that our perspective matrix creates a symmetric frustum
+
+    // Points at same distance but opposite sides
+    vec3f left_point{-1.0f, 0.0f, -5.0f};
+    vec3f right_point{1.0f, 0.0f, -5.0f};
+    vec3f bottom_point{0.0f, -1.0f, -5.0f};
+    vec3f top_point{0.0f, 1.0f, -5.0f};
+
+    vec3f proj_left = persp_square * left_point;
+    vec3f proj_right = persp_square * right_point;
+    vec3f proj_bottom = persp_square * bottom_point;
+    vec3f proj_top = persp_square * top_point;
+
+    float w = 5.0f;
+
+    // Should be symmetric around origin
+    EXPECT_NEAR(proj_left.x / w, -(proj_right.x / w), EPSILON);
+    EXPECT_NEAR(proj_bottom.y / w, -(proj_top.y / w), EPSILON);
+}
+
+TEST_F(PerspectiveProjectionTest, DoublePrecision) {
+    // Test with double precision
+    double fov_d = pi<double> / 4.0;
+    double aspect_d = 16.0 / 9.0;
+    double near_d = 0.1;
+    double far_d = 1000.0;
+
+    mat<double, 4, 4> persp_d = perspective(fov_d, aspect_d, near_d, far_d);
+
+    double tan_half_fov = std::tan(fov_d / 2.0);
+
+    // Test with higher precision
+    EXPECT_NEAR(persp_d(0, 0), 1.0 / (aspect_d * tan_half_fov), EPSILON_D * 1000);
+    EXPECT_NEAR(persp_d(1, 1), 1.0 / tan_half_fov, EPSILON_D * 1000);
+    EXPECT_NEAR(persp_d(3, 2), -1.0, EPSILON_D);
+}
+
+TEST_F(PerspectiveProjectionTest, ExtremeFOVValues) {
+    // Test with very small and very large FOV values
+    float fov_small = radians(5.0f);   // Very narrow
+    float fov_large = radians(160.0f); // Very wide
+
+    mat4f persp_small = perspective(fov_small, 1.0f, 1.0f, 10.0f);
+    mat4f persp_large = perspective(fov_large, 1.0f, 1.0f, 10.0f);
+
+    // Both should produce valid matrices
+    EXPECT_FALSE(std::isnan(persp_small(0, 0)));
+    EXPECT_FALSE(std::isnan(persp_small(1, 1)));
+    EXPECT_FALSE(std::isnan(persp_large(0, 0)));
+    EXPECT_FALSE(std::isnan(persp_large(1, 1)));
+
+    // Small FOV should have large scaling factors (telephoto effect)
+    EXPECT_GT(persp_small(1, 1), persp_large(1, 1));
+}
+
+TEST_F(PerspectiveProjectionTest, ViewingVolumeSize) {
+    // Test that the viewing volume size changes correctly with parameters
+
+    vec3f edge_point{1.0f, 1.0f, -5.0f};  // Point near the edge
+
+    // Wide FOV should include more of the scene (smaller final coordinates)
+    mat4f wide_fov = perspective(radians(90.0f), 1.0f, 1.0f, 10.0f);
+    mat4f narrow_fov = perspective(radians(30.0f), 1.0f, 1.0f, 10.0f);
+
+    vec3f wide_proj = wide_fov * edge_point;
+    vec3f narrow_proj = narrow_fov * edge_point;
+
+    float w = 5.0f;
+    float wide_final = wide_proj.x / w;
+    float narrow_final = narrow_proj.x / w;
+
+    // Wide FOV should produce smaller coordinates (fits more in view)
+    EXPECT_LT(std::abs(wide_final), std::abs(narrow_final));
+}
+
+TEST_F(PerspectiveProjectionTest, ZeroWCoordinateHandling) {
+    // Test points very close to the camera (potential division by very small numbers)
+    vec3f very_close{1.0f, 1.0f, -0.01f};  // Very close to camera
+
+    // This should still work and not produce infinite values
+    vec3f projected = persp_matrix * very_close;
+
+    EXPECT_FALSE(std::isinf(projected.x));
+    EXPECT_FALSE(std::isinf(projected.y));
+    EXPECT_FALSE(std::isinf(projected.z));
+    EXPECT_FALSE(std::isnan(projected.x));
+    EXPECT_FALSE(std::isnan(projected.y));
+    EXPECT_FALSE(std::isnan(projected.z));
+}
