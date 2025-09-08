@@ -5,9 +5,9 @@
 #include <sstream>
 #include <stdexcept>
 
-#ifndef LINA_STR_FLOAT_PRECISION
-#define LINA_STR_FLOAT_PRECISION 4
-#endif
+/*
+ */
+// #define LINA_MAT_COLUMN_MAJOR
 
 namespace lina
 {
@@ -89,8 +89,24 @@ struct mat
     constexpr T* data() { return a; }
     constexpr const T* data() const { return a; }
 
-    constexpr T& operator()(std::size_t r, std::size_t c) { return a[c + r * C]; }
-    constexpr const T& operator()(std::size_t r, std::size_t c) const { return a[c + r * C]; }
+    constexpr T& operator()(std::size_t r, std::size_t c)
+    {
+#ifdef LINA_MAT_COLUMN_MAJOR
+        return a[c * R + r];
+#else
+        return a[c + r * C];
+#endif
+    }
+
+    constexpr const T& operator()(std::size_t r, std::size_t c) const
+    {
+#ifdef LINA_MAT_COLUMN_MAJOR
+        return a[c * R + r];
+#else
+        return a[c + r * C];
+#endif
+    }
+
     constexpr T& operator[](std::size_t i) { return a[i]; }
     constexpr const T& operator[](std::size_t i) const { return a[i]; }
 
