@@ -1,25 +1,46 @@
 Language: Cpp
-BasedOnStyle: Microsoft
+BasedOnStyle: LLVM
+IndentWidth: 4
 ColumnLimit: 120
 PointerAlignment: Left
-BreakConstructorInitializersBeforeComma: true
-SeparateDefinitionBlocks: Always
-AlwaysBreakTemplateDeclarations: Yes
-ReflowComments: false
+SeparateDefinitionBlocks: Leave
+EmptyLineBeforeAccessModifier: LogicalBlock
+EmptyLineAfterAccessModifier: Never
+MaxEmptyLinesToKeep: 1
+BreakTemplateDeclarations: Yes
+BreakBeforeBraces: Custom
+BreakConstructorInitializers: BeforeComma
 AlignConsecutiveAssignments: Consecutive
 BraceWrapping:
-  AfterCaseLabel: true
+  AfterControlStatement: Always
+  AfterClass: true
+  AfterCaseLabel: false
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  AfterUnion: true
+  AfterExternBlock: true
+  BeforeCatch: true
+  BeforeElse: true
+  BeforeLambdaBody: false
+  BeforeWhile: true
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyNamespace: false
+  SplitEmptyRecord: false
+BracedInitializerIndentWidth: 4
 
 AlignAfterOpenBracket: Align
-BracedInitializerIndentWidth: 4
 AllowAllParametersOfDeclarationOnNextLine: true
 AllowAllArgumentsOnNextLine: true
-AlignArrayOfStructures: Left
+AlignArrayOfStructures: Right
 AlignEscapedNewlines: Left
 BinPackArguments: false
-Cpp11BracedListStyle: true
+BinPackParameters: false
+Cpp11BracedListStyle: false
 AlignOperands: AlignAfterOperator
 
 AllowShortBlocksOnASingleLine: Empty
-AllowShortFunctionsOnASingleLine: Inline
+AllowShortFunctionsOnASingleLine: All
 AllowShortIfStatementsOnASingleLine: false

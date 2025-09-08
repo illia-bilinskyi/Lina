@@ -10,20 +10,22 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-set(TEST_LIBRARY_CMAKE_TARGET_NAME test_${CORE_LIBRARY_CMAKE_TARGET_NAME})
+set(LINA_TEST_TARGET_NAME test_lina)
 
-add_executable(${TEST_LIBRARY_CMAKE_TARGET_NAME}
+add_executable(${LINA_TEST_TARGET_NAME}
         test_matrix.cpp
         test_vector.cpp
         test_matrix_operations.cpp
         test_vector_operations.cpp
         test_vector_matrix_operations.cpp
         test_transforms.cpp
+        test_camera.cpp
+        test_inverse_matrix.cpp
 )
-target_link_libraries(${TEST_LIBRARY_CMAKE_TARGET_NAME}
-        ${CORE_LIBRARY_CMAKE_TARGET_NAME}
+target_link_libraries(${LINA_TEST_TARGET_NAME}
+        ${LINA_LIBRARY_NAME}
         GTest::gtest_main
 )
 
 include(GoogleTest)
-gtest_discover_tests(${TEST_LIBRARY_CMAKE_TARGET_NAME})
+gtest_discover_tests(${LINA_TEST_TARGET_NAME})

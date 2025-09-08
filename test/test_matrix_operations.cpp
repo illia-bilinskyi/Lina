@@ -1,4 +1,4 @@
-#include "lina.h"
+#include "lina/lina.h"
 #include <gtest/gtest.h>
 
 using namespace lina;
@@ -8,23 +8,21 @@ class MatrixOperationsTest : public ::testing::Test
   protected:
     void SetUp() override
     {
-        mat2f_identity = mat2<float>{
-            {1.0f, 0.0f, 0.0f, 1.0f}
+        mat2f_identity = { 1.0f, 0.0f, 0.0f, 1.0f };
+        mat2f_regular  = { 1.0f, 2.0f, 3.0f, 4.0f };
+        mat3f_identity = {
+            { 1.0f, 0.0f, 0.0f },
+            { 0.0f, 1.0f, 0.0f },
+            { 0.0f, 0.0f, 1.0f }
         };
-        mat2f_regular = mat2<float>{
-            {1.0f, 2.0f, 3.0f, 4.0f}
-        };
-        mat3f_identity = mat3<float>{
-            {1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f}
-        };
-        mat3f_regular = mat3<float>{
-            {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f}
+        mat3f_regular = {
+            { 1.0f, 2.0f, 3.0f },
+            { 4.0f, 5.0f, 6.0f },
+            { 7.0f, 8.0f, 9.0f }
         };
 
         // Invertible 3x3 matrix
-        mat3f_invertible = mat3<float>{
-            {1.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 0.0f, 0.0f, 3.0f}
-        };
+        mat3f_invertible = { 1.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 0.0f, 0.0f, 3.0f };
     }
 
     mat2<float> mat2f_identity, mat2f_regular;
@@ -41,12 +39,8 @@ TEST_F(MatrixOperationsTest, AlmostEqual_Scalar)
 
 TEST_F(MatrixOperationsTest, AlmostEqual_Matrix)
 {
-    mat2<float> a{
-        {1.0f, 2.0f, 3.0f, 4.0f}
-    };
-    mat2<float> b{
-        {1.000001f, 2.000001f, 3.000001f, 4.000001f}
-    };
+    mat2<float> a{ 1.0f, 2.0f, 3.0f, 4.0f };
+    mat2<float> b{ 1.000001f, 2.000001f, 3.000001f, 4.000001f };
 
     EXPECT_TRUE(almost_equal(a, b, 1e-5f));
     EXPECT_FALSE(almost_equal(a, b, 1e-8f));
@@ -101,9 +95,7 @@ TEST_F(MatrixOperationsTest, Identity_4x4)
 
 TEST_F(MatrixOperationsTest, Transpose_2x2)
 {
-    mat2<float> m{
-        {1.0f, 2.0f, 3.0f, 4.0f}
-    };
+    mat2<float> m{ 1.0f, 2.0f, 3.0f, 4.0f };
     auto result = transpose(m);
 
     EXPECT_EQ(result(0, 0), 1.0f); // m(0,0)
@@ -124,9 +116,7 @@ TEST_F(MatrixOperationsTest, Transpose_3x3)
 
 TEST_F(MatrixOperationsTest, Transpose_RectangularMatrix)
 {
-    mat<float, 2, 3> m{
-        {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f}
-    };
+    mat<float, 2, 3> m{ 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f };
     auto result = transpose(m);
 
     static_assert(std::is_same_v<decltype(result), mat<float, 3, 2>>);
@@ -141,9 +131,7 @@ TEST_F(MatrixOperationsTest, Transpose_RectangularMatrix)
 
 TEST_F(MatrixOperationsTest, Determinant_2x2)
 {
-    mat2<float> m{
-        {1.0f, 2.0f, 3.0f, 4.0f}
-    };
+    mat2<float> m{ 1.0f, 2.0f, 3.0f, 4.0f };
     float result = det(m);
 
     // det = 1*4 - 2*3 = -2
@@ -193,7 +181,7 @@ TEST_F(MatrixOperationsTest, Inverse_2x2_Identity)
 
 TEST_F(MatrixOperationsTest, Inverse_2x2_Regular)
 {
-    mat2<float> m{2.0f, 0.0f, 0.0f, 2.0f}; // 2I
+    mat2<float> m{ 2.0f, 0.0f, 0.0f, 2.0f }; // 2I
     auto result = inverse(m);
 
     EXPECT_FLOAT_EQ(result(0, 0), 0.5f);
@@ -251,7 +239,7 @@ TEST_F(MatrixOperationsTest, Inverse_3x3_Diagonal)
 
 TEST_F(MatrixOperationsTest, Inverse_SingularMatrix_ThrowsException)
 {
-    mat2<float> singular{1.0f, 2.0f, 2.0f, 4.0f}; // det = 0
+    mat2<float> singular{ 1.0f, 2.0f, 2.0f, 4.0f }; // det = 0
 
     EXPECT_THROW(inverse(singular), std::invalid_argument);
 }

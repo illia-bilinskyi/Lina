@@ -1,4 +1,4 @@
-#include "lina.h"
+#include "lina/lina.h"
 #include <cmath>
 #include <gtest/gtest.h>
 
@@ -7,12 +7,12 @@ using namespace lina;
 class VectorOperationsTest : public ::testing::Test
 {
   protected:
-    static constexpr vec3f v1{1.0f, 2.0f, 3.0f};
-    static constexpr vec3f v2{4.0f, 5.0f, 6.0f};
-    static constexpr vec3f unit_x{1.0f, 0.0f, 0.0f};
-    static constexpr vec3f unit_y{0.0f, 1.0f, 0.0f};
-    static constexpr vec3f unit_z{0.0f, 0.0f, 1.0f};
-    static constexpr vec3f zero_vec{0.0f, 0.0f, 0.0f};
+    static constexpr vec3f v1{ 1.0f, 2.0f, 3.0f };
+    static constexpr vec3f v2{ 4.0f, 5.0f, 6.0f };
+    static constexpr vec3f unit_x{ 1.0f, 0.0f, 0.0f };
+    static constexpr vec3f unit_y{ 0.0f, 1.0f, 0.0f };
+    static constexpr vec3f unit_z{ 0.0f, 0.0f, 1.0f };
+    static constexpr vec3f zero_vec{ 0.0f, 0.0f, 0.0f };
 };
 
 TEST_F(VectorOperationsTest, DotProduct_Basic)
@@ -179,17 +179,17 @@ TEST_F(VectorOperationsTest, Distance_Symmetric)
 
 TEST_F(VectorOperationsTest, Column_ExtractFromMatrix)
 {
-    constexpr mat3<float> m{1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f};
+    constexpr mat3<float> m{ 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f };
 
     constexpr auto col0 = m.col<0>();
-    constexpr vec3f vec_col0{col0};
+    constexpr vec3f vec_col0{ col0 };
 
     EXPECT_EQ(vec_col0.x, 1.0f);
     EXPECT_EQ(vec_col0.y, 4.0f);
     EXPECT_EQ(vec_col0.z, 7.0f);
 
     constexpr auto col1 = m.col<1>();
-    constexpr vec3f vec_col1{col1};
+    constexpr vec3f vec_col1{ col1 };
 
     EXPECT_EQ(vec_col1.x, 2.0f);
     EXPECT_EQ(vec_col1.y, 5.0f);
@@ -198,17 +198,17 @@ TEST_F(VectorOperationsTest, Column_ExtractFromMatrix)
 
 TEST_F(VectorOperationsTest, Row_ExtractFromMatrix)
 {
-    constexpr mat3<float> m{1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f};
+    constexpr mat3<float> m{ 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f };
 
     constexpr auto row0 = m.row<0>();
-    constexpr vec3f vec_row0{row0};
+    constexpr vec3f vec_row0{ row0 };
 
     EXPECT_EQ(vec_row0.x, 1.0f);
     EXPECT_EQ(vec_row0.y, 2.0f);
     EXPECT_EQ(vec_row0.z, 3.0f);
 
     constexpr auto row1 = m.row<1>();
-    constexpr vec3f vec_row1{row1};
+    constexpr vec3f vec_row1{ row1 };
 
     EXPECT_EQ(vec_row1.x, 4.0f);
     EXPECT_EQ(vec_row1.y, 5.0f);

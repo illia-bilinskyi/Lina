@@ -9,7 +9,9 @@ namespace lina
 template <typename T, std::size_t R, std::size_t C>
 struct mat
 {
-    T a[R * C]{0}; // column-major: index = c*R + r
+    static_assert(std::is_arithmetic_v<T>, "Matrix supports only arithmetic types.");
+
+    T a[R * C]{ 0 };
 
     static constexpr std::size_t rows = R;
     static constexpr std::size_t cols = C;
@@ -20,26 +22,26 @@ struct mat
     // Fill constructor
     constexpr explicit mat(T fill)
     {
-        for (std::size_t i = 0; i < R * C; i++)
-            a[i] = fill;
+        for (std::size_t i = 0; i < R; i++)
+            for (std::size_t j = 0; j < C; j++)
+                operator()(i, j) = fill;
     }
 
     template <typename... Args, typename = std::enable_if_t<sizeof...(Args) == R * C>>
-    constexpr explicit mat(Args... args)
+    constexpr mat(Args... args)
     {
         std::size_t i = 0;
-        ((a[i++] = args), ...);
+        ((operator[](i++) = args), ...);
     }
 
-    // Initializer list constructor - enables aggregate-like initialization
-    constexpr mat(std::initializer_list<T> init)
+    constexpr mat(std::initializer_list<mat<T, 1, C>> rows)
     {
         std::size_t i = 0;
-        for (auto val : init)
+        for (auto row : rows)
         {
-            if (i >= R * C)
-                break;
-            a[i++] = val;
+            for (std::size_t j = 0; j < C; j++)
+                operator()(i, j) = row(j);
+            i++;
         }
     }
 
@@ -52,14 +54,15 @@ struct mat
         // Copy overlapping part
         for (std::size_t i = 0; i < minSize; i++)
             for (std::size_t j = 0; j < minSize; j++)
-                (*this)(i, j) = m(i, j);
+                operator()(i, j) = m(i, j);
     }
 
     template <typename T2>
     constexpr explicit mat(const mat<T2, R, C>& m)
     {
-        for (std::size_t i = 0; i < R * C; i++)
-            a[i] = static_cast<T>(m.a[i]);
+        for (std::size_t i = 0; i < R; i++)
+            for (std::size_t j = 0; j < C; j++)
+                operator()(i, j) = static_cast<T>(m(i, j));
     }
 
     template <std::size_t r, std::size_t c>
@@ -67,7 +70,7 @@ struct mat
     {
         static_assert(r < R, "Row index out of bounds");
         static_assert(c < C, "Column index out of bounds");
-        return this->operator()(r, c);
+        return operator()(r, c);
     }
 
     template <std::size_t r, std::size_t c>
@@ -75,38 +78,34 @@ struct mat
     {
         static_assert(r < R, "Row index out of bounds");
         static_assert(c < C, "Column index out of bounds");
-        return this->operator()(r, c);
+        return operator()(r, c);
     }
 
+    constexpr T* data() { return a; }
+    constexpr const T* data() const { return a; }
+
     constexpr T& operator()(std::size_t r, std::size_t c) { return a[c + r * C]; }
-
     constexpr const T& operator()(std::size_t r, std::size_t c) const { return a[c + r * C]; }
-
     constexpr T& operator[](std::size_t i) { return a[i]; }
-
     constexpr const T& operator[](std::size_t i) const { return a[i]; }
 
     constexpr T& operator()(std::size_t i)
     {
         static_assert(R == 1 || C == 1);
-        return a[i];
+        return operator[](i);
     }
 
     constexpr const T& operator()(std::size_t i) const
     {
         static_assert(R == 1 || C == 1);
-        return a[i];
+        return operator[](i);
     }
-
-    constexpr T* data() { return a; }
-
-    constexpr const T* data() const { return a; }
 
     constexpr mat<T, R, 1> col(std::size_t c) const
     {
         mat<T, R, 1> result{};
         for (std::size_t i = 0; i < R; i++)
-            result(i) = (*this)(i, c);
+            result(i) = operator()(i, c);
         return result;
     }
 
@@ -114,7 +113,7 @@ struct mat
     {
         mat<T, 1, C> result{};
         for (std::size_t i = 0; i < C; i++)
-            result(i) = (*this)(r, i);
+            result(i) = operator()(r, i);
         return result;
     }
 
@@ -139,8 +138,9 @@ struct mat
     constexpr mat operator-() const
     {
         mat res{};
-        for (std::size_t i = 0; i < R * C; i++)
-            res.a[i] = -a[i];
+        for (std::size_t i = 0; i < R; i++)
+            for (std::size_t j = 0; j < C; j++)
+                res(i, j) = -operator()(i, j);
         return res;
     }
 
@@ -149,15 +149,14 @@ struct mat
     constexpr mat operator*(T s) const
     {
         mat res{};
-        for (std::size_t i = 0; i < R * C; i++)
-            res.a[i] = a[i] * s;
+        for (std::size_t i = 0; i < R; i++)
+            for (std::size_t j = 0; j < C; j++)
+                res(i, j) = operator()(i, j) * s;
         return res;
     }
 
-    constexpr mat operator/(T s) const { return *this * (T{1} / s); }
-
+    constexpr mat operator/(T s) const { return *this * (T{ 1 } / s); }
     constexpr mat& operator*=(T s) { return *this = *this * s; }
-
     constexpr mat& operator/=(T s) { return *this = *this / s; }
 
     // ===== Matrix elementwise ops =====
@@ -165,15 +164,14 @@ struct mat
     constexpr mat operator+(const mat& other) const
     {
         mat res{};
-        for (std::size_t i = 0; i < R * C; i++)
-            res.a[i] = a[i] + other.a[i];
+        for (std::size_t i = 0; i < R; i++)
+            for (std::size_t j = 0; j < C; j++)
+                res(i, j) = operator()(i, j) + other(i, j);
         return res;
     }
 
     constexpr mat operator-(const mat& other) const { return *this + (-other); }
-
     constexpr mat& operator+=(const mat& other) { return *this = *this + other; }
-
     constexpr mat& operator-=(const mat& other) { return *this += -other; }
 
     // ===== Matrix multiplication =====
@@ -199,37 +197,36 @@ struct mat
 template <typename T>
 struct vec3
 {
-    union {
-        T a[3]{};
+    static_assert(std::is_arithmetic_v<T>, "Vector supports only arithmetic types.");
 
-        struct
-        {
-            T x, y, z;
-        };
-    };
+    T x, y, z;
 
     constexpr vec3()
-        : a{T{0}, T{0}, T{0}}
-    {
-    }
+        : x{ 0 }
+        , y{ 0 }
+        , z{ 0 }
+    {}
 
     constexpr vec3(T x_, T y_, T z_)
-        : a{x_, y_, z_}
-    {
-    }
+        : x{ x_ }
+        , y{ y_ }
+        , z{ z_ }
+    {}
 
     // Fill constructor
     constexpr explicit vec3(T value)
-        : a{value, value, value}
-    {
-    }
+        : x{ value }
+        , y{ value }
+        , z{ value }
+    {}
 
     constexpr vec3(std::initializer_list<T> init)
+        : vec3()
     {
         auto it = init.begin();
-        a[0]    = (it != init.end()) ? *it++ : T{0};
-        a[1]    = (it != init.end()) ? *it++ : T{0};
-        a[2]    = (it != init.end()) ? *it : T{0};
+        x       = (it != init.end()) ? *it++ : T{ 0 };
+        y       = (it != init.end()) ? *it++ : T{ 0 };
+        z       = (it != init.end()) ? *it : T{ 0 };
     }
 
     // Copy constructor
@@ -239,84 +236,67 @@ struct vec3
     constexpr vec3& operator=(const vec3& other) = default;
 
     // Conversion operator into matrix
-    constexpr explicit operator mat<T, 3, 1>() const { return mat<T, 3, 1>{a[0], a[1], a[2]}; }
-
-    constexpr explicit operator mat<T, 1, 3>() const { return mat<T, 1, 3>{a[0], a[1], a[2]}; }
+    constexpr explicit operator mat<T, 3, 1>() const { return mat<T, 3, 1>{ x, y, z }; }
+    constexpr explicit operator mat<T, 1, 3>() const { return mat<T, 1, 3>{ x, y, z }; }
 
     constexpr explicit vec3(const mat<T, 1, 3>& m)
         : vec3(m(0), m(1), m(2))
-    {
-    }
+    {}
 
     constexpr explicit vec3(const mat<T, 3, 1>& m)
         : vec3(m(0), m(1), m(2))
-    {
-    }
+    {}
 
     template <typename T2>
     constexpr vec3(const vec3<T2>& other)
-    {
-        for (std::size_t i = 0; i < 3; i++)
-            a[i] = static_cast<T>(other.a[i]);
-    }
+        : x{ static_cast<T>(other.x) }
+        , y{ static_cast<T>(other.y) }
+        , z{ static_cast<T>(other.z) }
+    {}
+
+    T* data() { return &x; }
+    const T* data() const { return &x; }
 
     template <std::size_t i>
     constexpr T& get()
     {
         static_assert(i < 3, "Index out of bounds");
-        return a[i];
+        return data()[i];
     }
 
     template <std::size_t i>
     constexpr const T& get() const
     {
         static_assert(i < 3, "Index out of bounds");
-        return a[i];
+        return data()[i];
     }
 
-    constexpr T& operator()(std::size_t i) { return a[i]; }
-
-    constexpr const T& operator()(std::size_t i) const { return a[i]; }
-
-    constexpr T& operator[](std::size_t i) { return a[i]; }
-
-    constexpr const T& operator[](std::size_t i) const { return a[i]; }
-
-    T* data() { return a; }
-
-    const T* data() const { return a; }
+    constexpr T& operator[](std::size_t i) { return *(&x + i); }
+    constexpr const T& operator[](const std::size_t i) const { return *(&x + i); }
 
     // ===== Unary Arithmetic Operations =====
 
     constexpr vec3 operator+() const { return *this; }
-
-    constexpr vec3 operator-() const { return vec3(-a[0], -a[1], -a[2]); }
+    constexpr vec3 operator-() const { return { -x, -y, -z }; }
 
     // ===== Binary Arithmetic Operations (vector + vector) =====
 
-    constexpr vec3 operator+(const vec3& other) const
-    {
-        return vec3(a[0] + other[0], a[1] + other[1], a[2] + other[2]);
-    }
-
+    constexpr vec3 operator+(const vec3& other) const { return { x + other.x, y + other.y, z + other.z }; }
     constexpr vec3 operator-(const vec3& other) const { return *this + (-other); }
 
     // ===== Binary Arithmetic Operations (vector + scalar) =====
 
-    constexpr vec3 operator*(T scalar) const { return vec3{a[0] * scalar, a[1] * scalar, a[2] * scalar}; }
-
-    constexpr vec3 operator/(T scalar) const { return *this * (T{1} / scalar); }
+    constexpr vec3 operator*(T scalar) const { return { x * scalar, y * scalar, z * scalar }; }
+    constexpr vec3 operator/(T scalar) const { return *this * (T{ 1 } / scalar); }
 
     // ===== Compound Assignment Operations (vector + vector) =====
 
     vec3& operator+=(const vec3& other) { return *this = *this + other; }
-
     vec3& operator-=(const vec3& other) { return *this += -other; }
 
     // ===== Compound Assignment Operations (vector + scalar) =====
 
     vec3& operator*=(T scalar) { return *this = *this * scalar; }
-
     vec3& operator/=(T scalar) { return *this = *this / scalar; }
 };
 
@@ -351,10 +331,15 @@ constexpr T pi = static_cast<T>(3.141592653589793L);
 // ========================= Comparison =========================
 
 template <typename T>
+constexpr std::enable_if_t<std::is_arithmetic_v<T>, T> abs(T x) noexcept
+{
+    return x < T(0) ? -x : x;
+}
+
+template <typename T>
 constexpr bool almost_equal(T a, T b, T eps = COMPARE_EPSILON_DEFAULT<T>)
 {
-    // TODO: create constexpr implementation of fabs
-    return std::fabs(a - b) <= eps;
+    return abs(a - b) <= eps;
 }
 
 template <typename T, std::size_t R, std::size_t C>
@@ -462,38 +447,71 @@ template <typename T>
 constexpr mat<T, 2, 2> c_inverse(const mat<T, 2, 2>& M)
 {
     T d = det(M);
-    return mat<T, 2, 2>{M(1, 1) / d, -M(0, 1) / d, -M(1, 0) / d, M(0, 0) / d};
+    return mat<T, 2, 2>{ M(1, 1) / d, -M(0, 1) / d, -M(1, 0) / d, M(0, 0) / d };
 }
 
 template <typename T>
 constexpr mat<T, 3, 3> c_inverse(const mat<T, 3, 3>& M)
 {
     T d = det(M);
-    return mat<T, 3, 3>{(M(1, 1) * M(2, 2) - M(1, 2) * M(2, 1)) / d,
-                        (M(0, 2) * M(2, 1) - M(0, 1) * M(2, 2)) / d,
-                        (M(0, 1) * M(1, 2) - M(0, 2) * M(1, 1)) / d,
+    return mat<T, 3, 3>{ (M(1, 1) * M(2, 2) - M(1, 2) * M(2, 1)) / d, (M(0, 2) * M(2, 1) - M(0, 1) * M(2, 2)) / d,
+                         (M(0, 1) * M(1, 2) - M(0, 2) * M(1, 1)) / d,
 
-                        (M(1, 2) * M(2, 0) - M(1, 0) * M(2, 2)) / d,
-                        (M(0, 0) * M(2, 2) - M(0, 2) * M(2, 0)) / d,
-                        (M(0, 2) * M(1, 0) - M(0, 0) * M(1, 2)) / d,
+                         (M(1, 2) * M(2, 0) - M(1, 0) * M(2, 2)) / d, (M(0, 0) * M(2, 2) - M(0, 2) * M(2, 0)) / d,
+                         (M(0, 2) * M(1, 0) - M(0, 0) * M(1, 2)) / d,
 
-                        (M(1, 0) * M(2, 1) - M(1, 1) * M(2, 0)) / d,
-                        (M(0, 1) * M(2, 0) - M(0, 0) * M(2, 1)) / d,
-                        (M(0, 0) * M(1, 1) - M(0, 1) * M(1, 0)) / d};
+                         (M(1, 0) * M(2, 1) - M(1, 1) * M(2, 0)) / d, (M(0, 1) * M(2, 0) - M(0, 0) * M(2, 1)) / d,
+                         (M(0, 0) * M(1, 1) - M(0, 1) * M(1, 0)) / d };
 }
 
 template <typename T>
-mat<T, 2, 2> inverse(const mat<T, 2, 2>& M)
+constexpr T det3x3(T a00, T a01, T a02, T a10, T a11, T a12, T a20, T a21, T a22)
 {
-    if (T d = det(M); almost_zero(d))
-        throw std::invalid_argument("inverse matrix require non-zero determinant!");
-
-    return c_inverse(M);
+    return a00 * (a11 * a22 - a12 * a21) - a01 * (a10 * a22 - a12 * a20) + a02 * (a10 * a21 - a11 * a20);
 }
 
 template <typename T>
-mat<T, 3, 3> inverse(const mat<T, 3, 3>& M)
+constexpr mat<T, 4, 4> c_inverse(const mat<T, 4, 4>& M)
 {
+    // Compute all cofactors for the adjugate matrix
+    T c00 = det3x3(M(1, 1), M(1, 2), M(1, 3), M(2, 1), M(2, 2), M(2, 3), M(3, 1), M(3, 2), M(3, 3));
+    T c01 = -det3x3(M(1, 0), M(1, 2), M(1, 3), M(2, 0), M(2, 2), M(2, 3), M(3, 0), M(3, 2), M(3, 3));
+    T c02 = det3x3(M(1, 0), M(1, 1), M(1, 3), M(2, 0), M(2, 1), M(2, 3), M(3, 0), M(3, 1), M(3, 3));
+    T c03 = -det3x3(M(1, 0), M(1, 1), M(1, 2), M(2, 0), M(2, 1), M(2, 2), M(3, 0), M(3, 1), M(3, 2));
+
+    T c10 = -det3x3(M(0, 1), M(0, 2), M(0, 3), M(2, 1), M(2, 2), M(2, 3), M(3, 1), M(3, 2), M(3, 3));
+    T c11 = det3x3(M(0, 0), M(0, 2), M(0, 3), M(2, 0), M(2, 2), M(2, 3), M(3, 0), M(3, 2), M(3, 3));
+    T c12 = -det3x3(M(0, 0), M(0, 1), M(0, 3), M(2, 0), M(2, 1), M(2, 3), M(3, 0), M(3, 1), M(3, 3));
+    T c13 = det3x3(M(0, 0), M(0, 1), M(0, 2), M(2, 0), M(2, 1), M(2, 2), M(3, 0), M(3, 1), M(3, 2));
+
+    T c20 = det3x3(M(0, 1), M(0, 2), M(0, 3), M(1, 1), M(1, 2), M(1, 3), M(3, 1), M(3, 2), M(3, 3));
+    T c21 = -det3x3(M(0, 0), M(0, 2), M(0, 3), M(1, 0), M(1, 2), M(1, 3), M(3, 0), M(3, 2), M(3, 3));
+    T c22 = det3x3(M(0, 0), M(0, 1), M(0, 3), M(1, 0), M(1, 1), M(1, 3), M(3, 0), M(3, 1), M(3, 3));
+    T c23 = -det3x3(M(0, 0), M(0, 1), M(0, 2), M(1, 0), M(1, 1), M(1, 2), M(3, 0), M(3, 1), M(3, 2));
+
+    T c30 = -det3x3(M(0, 1), M(0, 2), M(0, 3), M(1, 1), M(1, 2), M(1, 3), M(2, 1), M(2, 2), M(2, 3));
+    T c31 = det3x3(M(0, 0), M(0, 2), M(0, 3), M(1, 0), M(1, 2), M(1, 3), M(2, 0), M(2, 2), M(2, 3));
+    T c32 = -det3x3(M(0, 0), M(0, 1), M(0, 3), M(1, 0), M(1, 1), M(1, 3), M(2, 0), M(2, 1), M(2, 3));
+    T c33 = det3x3(M(0, 0), M(0, 1), M(0, 2), M(1, 0), M(1, 1), M(1, 2), M(2, 0), M(2, 1), M(2, 2));
+
+    // Compute determinant using first row
+    T determinant = M(0, 0) * c00 + M(0, 1) * c01 + M(0, 2) * c02 + M(0, 3) * c03;
+
+    // Create adjugate matrix (transpose of cofactor matrix) divided by determinant
+    // clang-format off
+    return mat<T, 4, 4>{
+        c00/determinant, c10/determinant, c20/determinant, c30/determinant,
+        c01/determinant, c11/determinant, c21/determinant, c31/determinant,
+        c02/determinant, c12/determinant, c22/determinant, c32/determinant,
+        c03/determinant, c13/determinant, c23/determinant, c33/determinant
+    };
+    // clang-format on
+}
+
+template <typename T, std::size_t N>
+mat<T, N, N> inverse(const mat<T, N, N>& M)
+{
+    static_assert(N <= 4 && N >= 2, "Inverse matrix calculation is implemented only for N=2,3,4.");
     if (T d = det(M); almost_zero(d))
         throw std::invalid_argument("inverse matrix require non-zero determinant!");
 
@@ -505,15 +523,15 @@ mat<T, 3, 3> inverse(const mat<T, 3, 3>& M)
 template <typename T>
 constexpr T dot(const vec3<T>& a, const vec3<T>& b)
 {
-    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
 template <typename T>
 constexpr vec3<T> cross(const vec3<T>& a, const vec3<T>& b)
 {
-    return vec3<T>{a[1] * b[2] - a[2] * b[1], //
-                   a[2] * b[0] - a[0] * b[2], //
-                   a[0] * b[1] - a[1] * b[0]};
+    return vec3<T>{ a.y * b.z - a.z * b.y, //
+                    a.z * b.x - a.x * b.z, //
+                    a.x * b.y - a.y * b.x };
 }
 
 template <typename T>
@@ -552,50 +570,50 @@ T distance(const vec3<T> a, const vec3<T> b)
 template <typename T>
 constexpr mat<T, 1, 4> to_homogeneous(const vec3<T>& v, T w = T(1))
 {
-    return {v[0], v[1], v[2], w};
+    return { v.x, v.y, v.z, w };
 }
 
 template <typename T>
 constexpr vec3<T> from_homogeneous(const mat<T, 1, 4>& m)
 {
     auto& w = m(0, 3);
-    return {m(0, 0) / w, m(0, 1) / w, m(0, 2) / w};
+    return { m(0, 0) / w, m(0, 1) / w, m(0, 2) / w };
 }
 
 template <typename T>
 constexpr vec3<T> operator*(const mat3<T>& m, const vec3<T>& v)
 {
     auto _v = static_cast<mat<T, 3, 1>>(v);
-    return vec3<T>{m * _v};
+    return vec3<T>{ m * _v };
 }
 
 template <typename T>
 constexpr vec3<T> operator*(const mat4<T>& m, const vec3<T>& v)
 {
-    mat<T, 4, 1> _v{v[0], v[1], v[2], T(1)};
-    auto result = m * _v;
-    const T& w  = result(3, 0);
+    mat<T, 4, 1> _v{ v.x, v.y, v.z, T{ 1 } };
+    mat<T, 4, 1> result = m * _v;
+    const T& w          = result(3, 0);
     if (almost_zero(w))
         return {};
-    return vec3<T>{result(0, 0) / w, result(1, 0) / w, result(2, 0) / w};
+    return vec3<T>{ result(0) / w, result(1) / w, result(2) / w };
 }
 
 template <typename T>
 constexpr vec3<T> operator*(const vec3<T>& v, const mat3<T>& m)
 {
     auto _v = static_cast<mat<T, 1, 3>>(v);
-    return vec3<T>{_v * m};
+    return vec3<T>{ _v * m };
 }
 
 template <typename T>
 constexpr vec3<T> operator*(const vec3<T>& v, const mat4<T>& m)
 {
-    mat<T, 1, 4> _v{v[0], v[1], v[2], T(1)};
+    mat<T, 1, 4> _v{ v.x, v.y, v.z, T{ 1 } };
     mat<T, 1, 4> result = _v * m;
     const T& w          = result(0, 3);
     if (almost_zero(w))
         return {};
-    return vec3<T>{result(0, 0) / w, result(0, 1) / w, result(0, 2) / w};
+    return vec3<T>{ result(0) / w, result(1) / w, result(2) / w };
 }
 
 // ========================= 3D Transforms (mat4) =========================
@@ -723,15 +741,15 @@ mat4<T> rotation(T alpha, T beta, T gamma)
 template <typename T>
 bool is_rotation_valid(const mat3<T>& rot)
 {
-    if (bool almost_zero_ = almost_zero(rot))
+    if (almost_zero(rot))
         return false;
 
     T determinant = det(rot);
-    if (bool det_almost_zero = almost_zero(determinant))
+    if (almost_zero(determinant))
         return false;
 
-    bool is_orthogonal      = almost_equal(c_inverse(rot), transpose(rot));
-    bool determinant_is_one = almost_equal(std::abs(determinant), T(1.0));
+    const bool is_orthogonal      = almost_equal(c_inverse(rot), transpose(rot));
+    const bool determinant_is_one = almost_equal(std::abs(determinant), T(1.0));
 
     return is_orthogonal && determinant_is_one;
 }
@@ -745,15 +763,15 @@ constexpr bool is_scale_valid(const vec3<T>& s)
 template <typename T>
 constexpr vec3<T> get_translation(const mat4<T>& t)
 {
-    return {t(0, 3), t(1, 3), t(2, 3)};
+    return { t(0, 3), t(1, 3), t(2, 3) };
 }
 
 template <typename T>
 vec3<T> get_scale(const mat4<T>& t)
 {
-    return {length(vec3<T>{t(0, 0), t(0, 1), t(0, 2)}), //
-            length(vec3<T>{t(1, 0), t(1, 1), t(1, 2)}), //
-            length(vec3<T>{t(2, 0), t(2, 1), t(2, 2)})};
+    return { length(vec3<T>{ t(0, 0), t(0, 1), t(0, 2) }),
+             length(vec3<T>{ t(1, 0), t(1, 1), t(1, 2) }),
+             length(vec3<T>{ t(2, 0), t(2, 1), t(2, 2) }) };
 }
 
 template <typename T>
@@ -765,7 +783,7 @@ mat3<T> get_rotation(const mat4<T>& t)
     mat3<T> rot{};
     for (std::size_t r = 0; r < 3; r++)
         for (std::size_t c = 0; c < 3; c++)
-            rot(r, c) = t(r, c) / s(c);
+            rot(r, c) = t(r, c) / s[c];
     if (!is_rotation_valid(rot))
         throw std::invalid_argument("the rotation matrix is invalid");
     return rot;
@@ -792,7 +810,100 @@ mat4<T> inverse_transform(const mat4<T>& transform)
 
     auto inv_t = translation(-t);
     auto inv_r = rotation(transpose(r));
-    auto inv_s = scale(vec3<T>{1 / s.x, 1 / s.y, 1 / s.z});
+    auto inv_s = scale(vec3<T>{ 1 / s.x, 1 / s.y, 1 / s.z });
     return inv_s * inv_r * inv_t;
 }
+
+// ========================= Camera (mat4) =========================
+
+template <typename T>
+mat4<T> look_at(const vec3<T>& eye, const vec3<T>& center, const vec3<T>& up)
+{
+    vec3<T> f = normalize(center - eye); // Direction camera is looking
+    vec3<T> r = normalize(cross(f, up)); // Camera's right
+    vec3<T> u = cross(r, f);             // Camera's up (recomputed for orthogonality)
+
+    // Create translation part (negative because we're moving the world, not the camera)
+    vec3<T> t{ -dot(r, eye), -dot(u, eye), dot(f, eye) };
+
+    return {
+        r.x,    r.y,    r.z,    t.x,   //
+        u.x,    u.y,    u.z,    t.y,   //
+        -f.x,   -f.y,   -f.z,   t.z,   //
+        T{ 0 }, T{ 0 }, T{ 0 }, T{ 1 } //
+    };
+}
+
+template <typename T>
+constexpr vec3<T> right_vec(const mat4<T>& view)
+{
+    return { view.template get<0, 0>(), view.template get<0, 1>(), view.template get<0, 2>() };
+}
+
+template <typename T>
+constexpr vec3<T> up_vec(const mat4<T>& view)
+{
+    return { view.template get<1, 0>(), view.template get<1, 1>(), view.template get<1, 2>() };
+}
+
+template <typename T>
+constexpr vec3<T> forward_vec(const mat4<T>& view)
+{
+    return { -view.template get<2, 0>(), -view.template get<2, 1>(), -view.template get<2, 2>() };
+}
+
+template <typename T>
+constexpr vec3<T> translation_vec(const mat4<T>& view)
+{
+    return { view.template get<3, 0>(), view.template get<3, 1>(), view.template get<3, 2>() };
+}
+
+template <typename T>
+constexpr mat4<T> ortho(T left, T right, T bottom, T top, T near, T far)
+{
+    mat4<T> result{};
+
+    result(0, 0) = T{ 2 } / (right - left);
+    result(1, 1) = T{ 2 } / (top - bottom);
+    result(2, 2) = -T{ 2 } / (far - near);
+
+    result(0, 3) = -(right + left) / (right - left);
+    result(1, 3) = -(top + bottom) / (top - bottom);
+    result(2, 3) = -(far + near) / (far - near);
+
+    result(3, 3) = T{ 1 };
+
+    return result;
+}
+
+/**
+ * @tparam T
+ * @param fovy field of view in Y direction (radians)
+ * @param aspect aspect ratio (width/height)
+ * @param near distance to near clipping plane
+ * @param far distance to far clipping plane
+ * @return
+ */
+template <typename T>
+mat4<T> perspective(T fovy, T aspect, T near, T far)
+{
+    T tan_half_fovy = std::tan(fovy / T{ 2 });
+
+    mat4<T> result{};
+
+    result(0, 0) = T{ 1 } / (aspect * tan_half_fovy);
+    result(1, 1) = T{ 1 } / tan_half_fovy;
+    result(2, 2) = -(far + near) / (far - near);
+    result(2, 3) = -(T{ 2 } * far * near) / (far - near);
+    result(3, 2) = -T{ 1 };
+
+    return result;
+}
+
+template <typename T>
+constexpr T radians(T degrees)
+{
+    return degrees * pi<T> / T{ 180 };
+}
+
 } // namespace lina
