@@ -2,7 +2,12 @@
 #include <cmath>
 #include <exception>
 #include <initializer_list>
+#include <sstream>
 #include <stdexcept>
+
+#ifndef LINA_STR_FLOAT_PRECISION
+#define LINA_STR_FLOAT_PRECISION 4
+#endif
 
 namespace lina
 {
@@ -192,6 +197,26 @@ struct mat
         }
         return res;
     }
+
+    friend std::ostream& operator<<(std::ostream& os, const mat& obj)
+    {
+        os << "{ ";
+        for (std::size_t r = 0; r < R; r++)
+        {
+            if (r != 0)
+                os << " ";
+            os << "{ ";
+            for (std::size_t c = 0; c < C; c++)
+            {
+                if (c != 0)
+                    os << ",";
+                os << obj(r, c);
+            }
+            os << " }";
+        }
+        os << " }";
+        return os;
+    }
 };
 
 template <typename T>
@@ -298,6 +323,18 @@ struct vec3
 
     vec3& operator*=(T scalar) { return *this = *this * scalar; }
     vec3& operator/=(T scalar) { return *this = *this / scalar; }
+
+    friend std::ostream& operator<<(std::ostream& os, const vec3& obj)
+    {
+        return os << "{ " << obj.x << ", " << obj.y << ", " << obj.z << " }";
+    }
+
+    [[nodiscard]] std::string str() const
+    {
+        std::ostringstream ss;
+        ss << *this;
+        return ss.str();
+    }
 };
 
 // ========================= Aliases =========================
