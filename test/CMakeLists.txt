@@ -21,6 +21,7 @@ add_executable(${LINA_TEST_TARGET_NAME}
         test_transforms.cpp
         test_camera.cpp
         test_inverse_matrix.cpp
+        test_str_operations.cpp
 )
 target_link_libraries(${LINA_TEST_TARGET_NAME}
         ${LINA_LIBRARY_NAME}
