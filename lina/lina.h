@@ -203,18 +203,12 @@ struct mat
         os << "{ ";
         for (std::size_t r = 0; r < R; r++)
         {
-            if (r != 0)
-                os << " ";
             os << "{ ";
             for (std::size_t c = 0; c < C; c++)
-            {
-                if (c != 0)
-                    os << ",";
-                os << obj(r, c);
-            }
-            os << " }";
+                os << obj(r, c) << (c < C - 1 ? ", " : " ");
+            os << "} ";
         }
-        os << " }";
+        os << "}";
         return os;
     }
 };

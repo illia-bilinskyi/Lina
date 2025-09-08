@@ -32,31 +32,31 @@ protected:
 TEST_F(MatStreamOperatorTest, Mat2x2IntegerValues) {
     mat<int, 2, 2> m{1, 2, 3, 4};
     oss << m;
-    EXPECT_EQ(oss.str(), "{ { 1,2 } { 3,4 } }");
+    EXPECT_EQ(oss.str(), "{ { 1, 2 } { 3, 4 } }");
 }
 
 TEST_F(MatStreamOperatorTest, Mat2x2FloatValues) {
     mat<float, 2, 2> m{1.5f, 2.5f, 3.5f, 4.5f};
     oss << m;
-    EXPECT_EQ(oss.str(), "{ { 1.5,2.5 } { 3.5,4.5 } }");
+    EXPECT_EQ(oss.str(), "{ { 1.5, 2.5 } { 3.5, 4.5 } }");
 }
 
 TEST_F(MatStreamOperatorTest, Mat3x3IntegerValues) {
     mat<int, 3, 3> m{1, 2, 3, 4, 5, 6, 7, 8, 9};
     oss << m;
-    EXPECT_EQ(oss.str(), "{ { 1,2,3 } { 4,5,6 } { 7,8,9 } }");
+    EXPECT_EQ(oss.str(), "{ { 1, 2, 3 } { 4, 5, 6 } { 7, 8, 9 } }");
 }
 
 TEST_F(MatStreamOperatorTest, Mat4x4IntegerValues) {
     mat<int, 4, 4> m{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     oss << m;
-    EXPECT_EQ(oss.str(), "{ { 1,2,3,4 } { 5,6,7,8 } { 9,10,11,12 } { 13,14,15,16 } }");
+    EXPECT_EQ(oss.str(), "{ { 1, 2, 3, 4 } { 5, 6, 7, 8 } { 9, 10, 11, 12 } { 13, 14, 15, 16 } }");
 }
 
 TEST_F(MatStreamOperatorTest, Mat1x3RowVector) {
     mat<int, 1, 3> m{1, 2, 3};
     oss << m;
-    EXPECT_EQ(oss.str(), "{ { 1,2,3 } }");
+    EXPECT_EQ(oss.str(), "{ { 1, 2, 3 } }");
 }
 
 TEST_F(MatStreamOperatorTest, Mat3x1ColumnVector) {
@@ -74,31 +74,31 @@ TEST_F(MatStreamOperatorTest, Mat1x1SingleElement) {
 TEST_F(MatStreamOperatorTest, Mat2x2ZeroMatrix) {
     mat<int, 2, 2> m{}; // Default initialized to zeros
     oss << m;
-    EXPECT_EQ(oss.str(), "{ { 0,0 } { 0,0 } }");
+    EXPECT_EQ(oss.str(), "{ { 0, 0 } { 0, 0 } }");
 }
 
 TEST_F(MatStreamOperatorTest, Mat2x2NegativeValues) {
     mat<int, 2, 2> m{-1, -2, -3, -4};
     oss << m;
-    EXPECT_EQ(oss.str(), "{ { -1,-2 } { -3,-4 } }");
+    EXPECT_EQ(oss.str(), "{ { -1, -2 } { -3, -4 } }");
 }
 
 TEST_F(MatStreamOperatorTest, Mat2x2DoubleValues) {
     mat<double, 2, 2> m{1.123, 2.456, 3.789, 4.012};
     oss << m;
-    EXPECT_EQ(oss.str(), "{ { 1.123,2.456 } { 3.789,4.012 } }");
+    EXPECT_EQ(oss.str(), "{ { 1.123, 2.456 } { 3.789, 4.012 } }");
 }
 
 TEST_F(MatStreamOperatorTest, Mat3x2RectangularMatrix) {
     mat<int, 3, 2> m{1, 2, 3, 4, 5, 6};
     oss << m;
-    EXPECT_EQ(oss.str(), "{ { 1,2 } { 3,4 } { 5,6 } }");
+    EXPECT_EQ(oss.str(), "{ { 1, 2 } { 3, 4 } { 5, 6 } }");
 }
 
 TEST_F(MatStreamOperatorTest, Mat2x3RectangularMatrix) {
     mat<int, 2, 3> m{1, 2, 3, 4, 5, 6};
     oss << m;
-    EXPECT_EQ(oss.str(), "{ { 1,2,3 } { 4,5,6 } }");
+    EXPECT_EQ(oss.str(), "{ { 1, 2, 3 } { 4, 5, 6 } }");
 }
 
 // Vec3 Stream Operator Tests
@@ -214,13 +214,13 @@ TEST(Vec3StrMethodTest, Vec3StrScientificNotation) {
 TEST_F(MatStreamOperatorTest, MatIdentityMatrix) {
     auto m = identity<int, 3>();
     oss << m;
-    EXPECT_EQ(oss.str(), "{ { 1,0,0 } { 0,1,0 } { 0,0,1 } }");
+    EXPECT_EQ(oss.str(), "{ { 1, 0, 0 } { 0, 1, 0 } { 0, 0, 1 } }");
 }
 
 TEST_F(MatStreamOperatorTest, MatFillConstructor) {
     mat<int, 2, 2> m{42}; // Fill with 42
     oss << m;
-    EXPECT_EQ(oss.str(), "{ { 42,42 } { 42,42 } }");
+    EXPECT_EQ(oss.str(), "{ { 42, 42 } { 42, 42 } }");
 }
 
 
@@ -229,7 +229,7 @@ TEST_F(MatStreamOperatorTest, MatHighPrecision) {
     mat<double, 2, 2> m{}; // Fill with 42
     m(0, 0) = 0.0000001;
     oss << m;
-    EXPECT_EQ(oss.str(), "{ { 1e-07,0 } { 0,0 } }");
+    EXPECT_EQ(oss.str(), "{ { 1e-07, 0 } { 0, 0 } }");
 }
 
 // Test with type aliases
@@ -248,18 +248,18 @@ TEST_F(Vec3StreamOperatorTest, Vec3dAlias) {
 TEST_F(MatStreamOperatorTest, Mat2fAlias) {
     mat2f m{1.0f, 2.0f, 3.0f, 4.0f};
     oss << m;
-    EXPECT_EQ(oss.str(), "{ { 1,2 } { 3,4 } }");
+    EXPECT_EQ(oss.str(), "{ { 1, 2 } { 3, 4 } }");
 }
 
 TEST_F(MatStreamOperatorTest, Mat3dAlias) {
     mat3d m{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
     oss << m;
-    EXPECT_EQ(oss.str(), "{ { 1,2,3 } { 4,5,6 } { 7,8,9 } }");
+    EXPECT_EQ(oss.str(), "{ { 1, 2, 3 } { 4, 5, 6 } { 7, 8, 9 } }");
 }
 
 TEST_F(MatStreamOperatorTest, Mat4fAlias) {
     mat4f m{1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 
             9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f};
     oss << m;
-    EXPECT_EQ(oss.str(), "{ { 1,2,3,4 } { 5,6,7,8 } { 9,10,11,12 } { 13,14,15,16 } }");
+    EXPECT_EQ(oss.str(), "{ { 1, 2, 3, 4 } { 5, 6, 7, 8 } { 9, 10, 11, 12 } { 13, 14, 15, 16 } }");
 }
