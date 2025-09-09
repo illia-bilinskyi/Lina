@@ -1,6 +1,4 @@
 #pragma once
-#include <cmath>
-#include <exception>
 #include <initializer_list>
 #include <sstream>
 #include <stdexcept>
@@ -385,13 +383,16 @@ constexpr T pi = static_cast<T>(3.141592653589793L);
 // ========================= Constexpr Math Functions =========================
 
 template <typename T>
-constexpr std::enable_if_t<std::is_arithmetic_v<T>, T> abs(T x) noexcept
+using enable_if_arithmetic_t = std::enable_if_t<std::is_arithmetic_v<T>, T>;
+
+template <typename T>
+constexpr enable_if_arithmetic_t<T> abs(T x) noexcept
 {
     return x < T(0) ? -x : x;
 }
 
 template <typename T>
-constexpr T sin(T x) noexcept
+constexpr enable_if_arithmetic_t<T> sin(T x) noexcept
 {
     // Normalize x to [-pi, pi] range for better convergence
     while (x > pi<T>)
@@ -407,7 +408,7 @@ constexpr T sin(T x) noexcept
 }
 
 template <typename T>
-constexpr T cos(T x) noexcept
+constexpr enable_if_arithmetic_t<T> cos(T x) noexcept
 {
     // Normalize x to [-pi, pi] range for better convergence
     while (x > pi<T>)
@@ -423,13 +424,13 @@ constexpr T cos(T x) noexcept
 }
 
 template <typename T>
-constexpr T tan(T x) noexcept
+constexpr enable_if_arithmetic_t<T> tan(T x) noexcept
 {
     return lina::sin(x) / lina::cos(x);
 }
 
 template <typename T>
-constexpr T sqrt(T x) noexcept
+constexpr enable_if_arithmetic_t<T> sqrt(T x) noexcept
 {
     if (x < T(0))
         return T(0); // Return 0 for negative inputs (like std::sqrt for NaN behavior)
@@ -897,6 +898,17 @@ constexpr vec3<T> get_scale(const mat4<T>& t) noexcept
 }
 
 template <typename T>
+constexpr mat3<T> c_get_rotation(const mat4<T>& t) noexcept
+{
+    auto s = get_scale(t);
+    return {
+        {t(0, 0) / s[0], t(0, 1) / s[1], t(0, 2) / s[2]},
+        {t(1, 0) / s[0], t(1, 1) / s[1], t(1, 2) / s[2]},
+        {t(2, 0) / s[0], t(2, 1) / s[1], t(2, 2) / s[2]}
+    };
+}
+
+template <typename T>
 mat3<T> get_rotation(const mat4<T>& t)
 {
     auto s = get_scale(t);
@@ -912,11 +924,16 @@ mat3<T> get_rotation(const mat4<T>& t)
 }
 
 template <typename T>
-void decompose(const mat4<T>& transform, vec3<T>& t, mat3<T>& r, vec3<T>& s)
+constexpr mat4<T> c_inverse_transform(const mat4<T>& transform)
 {
-    t = get_translation(transform);
-    r = get_rotation(transform);
-    s = get_scale(transform);
+    auto t = get_translation(transform);
+    auto r = c_get_rotation(transform);
+    auto s = get_scale(transform);
+
+    auto inv_t = translation(-t);
+    auto inv_r = rotation(transpose(r));
+    auto inv_s = scale(vec3<T>{ 1 / s.x, 1 / s.y, 1 / s.z });
+    return inv_s * inv_r * inv_t;
 }
 
 template <typename T>
@@ -934,6 +951,14 @@ mat4<T> inverse_transform(const mat4<T>& transform)
     auto inv_r = rotation(transpose(r));
     auto inv_s = scale(vec3<T>{ 1 / s.x, 1 / s.y, 1 / s.z });
     return inv_s * inv_r * inv_t;
+}
+
+template <typename T>
+void decompose(const mat4<T>& transform, vec3<T>& t, mat3<T>& r, vec3<T>& s)
+{
+    t = get_translation(transform);
+    r = get_rotation(transform);
+    s = get_scale(transform);
 }
 
 // ========================= Camera (mat4) =========================
