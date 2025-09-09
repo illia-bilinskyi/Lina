@@ -3,6 +3,12 @@
 #include <sstream>
 #include <stdexcept>
 
+#ifdef __CUDA_ARCH__
+#define CUDA_MODIFIER __host__ __device__
+#else
+#define CUDA_MODIFIER
+#endif
+
 /*
  */
 // #define LINA_MAT_COLUMN_MAJOR
@@ -20,10 +26,10 @@ struct mat
     static constexpr std::size_t cols = C;
     static constexpr std::size_t size = rows * cols;
 
-    constexpr mat() = default;
+    CUDA_MODIFIER constexpr mat() = default;
 
     // Fill constructor
-    constexpr explicit mat(T fill)
+    CUDA_MODIFIER constexpr explicit mat(T fill)
     {
         for (std::size_t i = 0; i < R; i++)
             for (std::size_t j = 0; j < C; j++)
@@ -31,13 +37,13 @@ struct mat
     }
 
     template <typename... Args, typename = std::enable_if_t<sizeof...(Args) == R * C>>
-    constexpr mat(Args... args)
+    CUDA_MODIFIER constexpr mat(Args... args)
     {
         std::size_t i = 0;
         ((operator[](i++) = args), ...);
     }
 
-    constexpr mat(std::initializer_list<mat<T, 1, C>> rows)
+    CUDA_MODIFIER constexpr mat(std::initializer_list<mat<T, 1, C>> rows)
     {
         std::size_t i = 0;
         for (auto row : rows)
@@ -50,7 +56,7 @@ struct mat
 
     // Copy constructor for square matrices
     template <std::size_t N>
-    constexpr explicit mat(const mat<T, N, N>& m)
+    CUDA_MODIFIER constexpr explicit mat(const mat<T, N, N>& m)
     {
         static_assert(R == C);
         const std::size_t minSize = (R < N) ? R : N;
@@ -61,7 +67,7 @@ struct mat
     }
 
     template <typename T2>
-    constexpr explicit mat(const mat<T2, R, C>& m)
+    CUDA_MODIFIER constexpr explicit mat(const mat<T2, R, C>& m)
     {
         for (std::size_t i = 0; i < R; i++)
             for (std::size_t j = 0; j < C; j++)
@@ -69,7 +75,7 @@ struct mat
     }
 
     template <std::size_t r, std::size_t c>
-    constexpr T& get() noexcept
+    CUDA_MODIFIER constexpr T& get() noexcept
     {
         static_assert(r < R, "Row index out of bounds");
         static_assert(c < C, "Column index out of bounds");
@@ -77,17 +83,17 @@ struct mat
     }
 
     template <std::size_t r, std::size_t c>
-    constexpr const T& get() const noexcept
+    CUDA_MODIFIER constexpr const T& get() const noexcept
     {
         static_assert(r < R, "Row index out of bounds");
         static_assert(c < C, "Column index out of bounds");
         return operator()(r, c);
     }
 
-    constexpr T* data() noexcept { return a; }
-    constexpr const T* data() const noexcept { return a; }
+    CUDA_MODIFIER constexpr T* data() noexcept { return a; }
+    CUDA_MODIFIER constexpr const T* data() const noexcept { return a; }
 
-    constexpr T& operator()(std::size_t r, std::size_t c) noexcept
+    CUDA_MODIFIER constexpr T& operator()(std::size_t r, std::size_t c) noexcept
     {
 #ifdef LINA_MAT_COLUMN_MAJOR
         return a[c * R + r];
@@ -96,7 +102,7 @@ struct mat
 #endif
     }
 
-    constexpr const T& operator()(std::size_t r, std::size_t c) const noexcept
+    CUDA_MODIFIER constexpr const T& operator()(std::size_t r, std::size_t c) const noexcept
     {
 #ifdef LINA_MAT_COLUMN_MAJOR
         return a[c * R + r];
@@ -105,22 +111,22 @@ struct mat
 #endif
     }
 
-    constexpr T& operator[](std::size_t i) noexcept { return a[i]; }
-    constexpr const T& operator[](std::size_t i) const noexcept { return a[i]; }
+    CUDA_MODIFIER constexpr T& operator[](std::size_t i) noexcept { return a[i]; }
+    CUDA_MODIFIER constexpr const T& operator[](std::size_t i) const noexcept { return a[i]; }
 
-    constexpr T& operator()(std::size_t i) noexcept
+    CUDA_MODIFIER constexpr T& operator()(std::size_t i) noexcept
     {
         static_assert(R == 1 || C == 1);
         return operator[](i);
     }
 
-    constexpr const T& operator()(std::size_t i) const noexcept
+    CUDA_MODIFIER constexpr const T& operator()(std::size_t i) const noexcept
     {
         static_assert(R == 1 || C == 1);
         return operator[](i);
     }
 
-    constexpr mat<T, R, 1> col(std::size_t c) const noexcept
+    CUDA_MODIFIER constexpr mat<T, R, 1> col(std::size_t c) const noexcept
     {
         mat<T, R, 1> result{};
         for (std::size_t i = 0; i < R; i++)
@@ -128,7 +134,7 @@ struct mat
         return result;
     }
 
-    constexpr mat<T, 1, C> row(std::size_t r) const noexcept
+    CUDA_MODIFIER constexpr mat<T, 1, C> row(std::size_t r) const noexcept
     {
         mat<T, 1, C> result{};
         for (std::size_t i = 0; i < C; i++)
@@ -137,14 +143,14 @@ struct mat
     }
 
     template <std::size_t r>
-    constexpr mat<T, 1, C> row() const noexcept
+    CUDA_MODIFIER constexpr mat<T, 1, C> row() const noexcept
     {
         static_assert(r < R, "Row index out of bounds");
         return row(r);
     }
 
     template <std::size_t c>
-    constexpr mat<T, R, 1> col() const noexcept
+    CUDA_MODIFIER constexpr mat<T, R, 1> col() const noexcept
     {
         static_assert(c < C, "Column index out of bounds");
         return col(c);
@@ -152,9 +158,9 @@ struct mat
 
     // ===== Unary operators =====
 
-    constexpr mat operator+() const noexcept { return *this; }
+    CUDA_MODIFIER constexpr mat operator+() const noexcept { return *this; }
 
-    constexpr mat operator-() const noexcept
+    CUDA_MODIFIER constexpr mat operator-() const noexcept
     {
         mat res{};
         for (std::size_t i = 0; i < R; i++)
@@ -165,7 +171,7 @@ struct mat
 
     // ===== Scalar ops =====
 
-    constexpr mat operator*(T s) const noexcept
+    CUDA_MODIFIER constexpr mat operator*(T s) const noexcept
     {
         mat res{};
         for (std::size_t i = 0; i < R; i++)
@@ -174,13 +180,13 @@ struct mat
         return res;
     }
 
-    constexpr mat operator/(T s) const noexcept { return *this * (T{ 1 } / s); }
-    constexpr mat& operator*=(T s) { return *this = *this * s; }
-    constexpr mat& operator/=(T s) { return *this = *this / s; }
+    CUDA_MODIFIER constexpr mat operator/(T s) const noexcept { return *this * (T{ 1 } / s); }
+    CUDA_MODIFIER constexpr mat& operator*=(T s) { return *this = *this * s; }
+    CUDA_MODIFIER constexpr mat& operator/=(T s) { return *this = *this / s; }
 
     // ===== Matrix elementwise ops =====
 
-    constexpr mat operator+(const mat& other) const noexcept
+    CUDA_MODIFIER constexpr mat operator+(const mat& other) const noexcept
     {
         mat res{};
         for (std::size_t i = 0; i < R; i++)
@@ -189,14 +195,14 @@ struct mat
         return res;
     }
 
-    constexpr mat operator-(const mat& other) const noexcept { return *this + (-other); }
-    constexpr mat& operator+=(const mat& other) { return *this = *this + other; }
-    constexpr mat& operator-=(const mat& other) { return *this += -other; }
+    CUDA_MODIFIER constexpr mat operator-(const mat& other) const noexcept { return *this + (-other); }
+    CUDA_MODIFIER constexpr mat& operator+=(const mat& other) { return *this = *this + other; }
+    CUDA_MODIFIER constexpr mat& operator-=(const mat& other) { return *this += -other; }
 
     // ===== Matrix multiplication =====
 
     template <std::size_t K>
-    constexpr mat<T, R, K> operator*(const mat<T, C, K>& B) const noexcept
+    CUDA_MODIFIER constexpr mat<T, R, K> operator*(const mat<T, C, K>& B) const noexcept
     {
         mat<T, R, K> res{};
         for (std::size_t i = 0; i < R; i++)
@@ -241,20 +247,20 @@ struct vec3
 
     T x, y, z;
 
-    constexpr vec3()
+    CUDA_MODIFIER constexpr vec3()
         : x{ 0 }
         , y{ 0 }
         , z{ 0 }
     {}
 
-    constexpr vec3(T x_, T y_, T z_)
+    CUDA_MODIFIER constexpr vec3(T x_, T y_, T z_)
         : x{ x_ }
         , y{ y_ }
         , z{ z_ }
     {}
 
     // Fill constructor
-    constexpr explicit vec3(T value)
+    CUDA_MODIFIER constexpr explicit vec3(T value)
         : x{ value }
         , y{ value }
         , z{ value }
@@ -270,74 +276,74 @@ struct vec3
     }
 
     // Copy constructor
-    constexpr vec3(const vec3&) = default; // let compiler handle constexpr correctly
+    CUDA_MODIFIER constexpr vec3(const vec3&) = default; // let compiler handle constexpr correctly
 
     // Assignment operator
-    constexpr vec3& operator=(const vec3& other) = default;
+    CUDA_MODIFIER constexpr vec3& operator=(const vec3& other) = default;
 
     // Conversion operator into matrix
-    constexpr explicit operator mat<T, 3, 1>() const noexcept { return mat<T, 3, 1>{ x, y, z }; }
-    constexpr explicit operator mat<T, 1, 3>() const noexcept { return mat<T, 1, 3>{ x, y, z }; }
+    CUDA_MODIFIER constexpr explicit operator mat<T, 3, 1>() const noexcept { return mat<T, 3, 1>{ x, y, z }; }
+    CUDA_MODIFIER constexpr explicit operator mat<T, 1, 3>() const noexcept { return mat<T, 1, 3>{ x, y, z }; }
 
-    constexpr explicit vec3(const mat<T, 1, 3>& m)
+    CUDA_MODIFIER constexpr explicit vec3(const mat<T, 1, 3>& m)
         : vec3(m(0), m(1), m(2))
     {}
 
-    constexpr explicit vec3(const mat<T, 3, 1>& m)
+    CUDA_MODIFIER constexpr explicit vec3(const mat<T, 3, 1>& m)
         : vec3(m(0), m(1), m(2))
     {}
 
     template <typename T2>
-    constexpr vec3(const vec3<T2>& other)
+    CUDA_MODIFIER constexpr vec3(const vec3<T2>& other)
         : x{ static_cast<T>(other.x) }
         , y{ static_cast<T>(other.y) }
         , z{ static_cast<T>(other.z) }
     {}
 
-    T* data() noexcept { return &x; }
-    const T* data() const noexcept { return &x; }
+    CUDA_MODIFIER T* data() noexcept { return &x; }
+    CUDA_MODIFIER const T* data() const noexcept { return &x; }
 
     template <std::size_t i>
-    constexpr T& get() noexcept
+    CUDA_MODIFIER constexpr T& get() noexcept
     {
         static_assert(i < 3, "Index out of bounds");
         return data()[i];
     }
 
     template <std::size_t i>
-    constexpr const T& get() const noexcept
+    CUDA_MODIFIER constexpr const T& get() const noexcept
     {
         static_assert(i < 3, "Index out of bounds");
         return data()[i];
     }
 
-    constexpr T& operator[](std::size_t i) noexcept { return *(&x + i); }
-    constexpr const T& operator[](std::size_t i) const noexcept { return *(&x + i); }
+    CUDA_MODIFIER constexpr T& operator[](std::size_t i) noexcept { return *(&x + i); }
+    CUDA_MODIFIER constexpr const T& operator[](std::size_t i) const noexcept { return *(&x + i); }
 
     // ===== Unary Arithmetic Operations =====
 
-    constexpr vec3 operator+() const noexcept { return *this; }
-    constexpr vec3 operator-() const noexcept { return { -x, -y, -z }; }
+    CUDA_MODIFIER constexpr vec3 operator+() const noexcept { return *this; }
+    CUDA_MODIFIER constexpr vec3 operator-() const noexcept { return { -x, -y, -z }; }
 
     // ===== Binary Arithmetic Operations (vector + vector) =====
 
-    constexpr vec3 operator+(const vec3& other) const noexcept { return { x + other.x, y + other.y, z + other.z }; }
-    constexpr vec3 operator-(const vec3& other) const noexcept { return *this + (-other); }
+    CUDA_MODIFIER constexpr vec3 operator+(const vec3& other) const noexcept { return { x + other.x, y + other.y, z + other.z }; }
+    CUDA_MODIFIER constexpr vec3 operator-(const vec3& other) const noexcept { return *this + (-other); }
 
     // ===== Binary Arithmetic Operations (vector + scalar) =====
 
-    constexpr vec3 operator*(T scalar) const noexcept { return { x * scalar, y * scalar, z * scalar }; }
-    constexpr vec3 operator/(T scalar) const noexcept { return *this * (T{ 1 } / scalar); }
+    CUDA_MODIFIER constexpr vec3 operator*(T scalar) const noexcept { return { x * scalar, y * scalar, z * scalar }; }
+    CUDA_MODIFIER constexpr vec3 operator/(T scalar) const noexcept { return *this * (T{ 1 } / scalar); }
 
     // ===== Compound Assignment Operations (vector + vector) =====
 
-    vec3& operator+=(const vec3& other) { return *this = *this + other; }
-    vec3& operator-=(const vec3& other) { return *this += -other; }
+    CUDA_MODIFIER vec3& operator+=(const vec3& other) { return *this = *this + other; }
+    CUDA_MODIFIER vec3& operator-=(const vec3& other) { return *this += -other; }
 
     // ===== Compound Assignment Operations (vector + scalar) =====
 
-    vec3& operator*=(T scalar) { return *this = *this * scalar; }
-    vec3& operator/=(T scalar) { return *this = *this / scalar; }
+    CUDA_MODIFIER vec3& operator*=(T scalar) { return *this = *this * scalar; }
+    CUDA_MODIFIER vec3& operator/=(T scalar) { return *this = *this / scalar; }
 
     friend std::ostream& operator<<(std::ostream& os, const vec3& obj)
     {
@@ -375,10 +381,10 @@ using mat4d = mat4<double>;
 // ========================= Constants =========================
 
 template <typename T>
-constexpr T COMPARE_EPSILON_DEFAULT = static_cast<T>(1e-6);
+inline constexpr T COMPARE_EPSILON_DEFAULT = static_cast<T>(1e-6);
 
 template <typename T>
-constexpr T pi = static_cast<T>(3.141592653589793L);
+inline constexpr T pi = static_cast<T>(3.141592653589793L);
 
 // ========================= Constexpr Math Functions =========================
 
@@ -386,13 +392,13 @@ template <typename T>
 using enable_if_arithmetic_t = std::enable_if_t<std::is_arithmetic_v<T>, T>;
 
 template <typename T>
-constexpr enable_if_arithmetic_t<T> abs(T x) noexcept
+CUDA_MODIFIER constexpr enable_if_arithmetic_t<T> abs(T x) noexcept
 {
     return x < T(0) ? -x : x;
 }
 
 template <typename T>
-constexpr enable_if_arithmetic_t<T> sin(T x) noexcept
+CUDA_MODIFIER constexpr enable_if_arithmetic_t<T> sin(T x) noexcept
 {
     // Normalize x to [-pi, pi] range for better convergence
     while (x > pi<T>)
@@ -408,7 +414,7 @@ constexpr enable_if_arithmetic_t<T> sin(T x) noexcept
 }
 
 template <typename T>
-constexpr enable_if_arithmetic_t<T> cos(T x) noexcept
+CUDA_MODIFIER constexpr enable_if_arithmetic_t<T> cos(T x) noexcept
 {
     // Normalize x to [-pi, pi] range for better convergence
     while (x > pi<T>)
@@ -424,13 +430,13 @@ constexpr enable_if_arithmetic_t<T> cos(T x) noexcept
 }
 
 template <typename T>
-constexpr enable_if_arithmetic_t<T> tan(T x) noexcept
+CUDA_MODIFIER constexpr enable_if_arithmetic_t<T> tan(T x) noexcept
 {
     return lina::sin(x) / lina::cos(x);
 }
 
 template <typename T>
-constexpr enable_if_arithmetic_t<T> sqrt(T x) noexcept
+CUDA_MODIFIER constexpr enable_if_arithmetic_t<T> sqrt(T x) noexcept
 {
     if (x < T(0))
         return T(0); // Return 0 for negative inputs (like std::sqrt for NaN behavior)
@@ -464,13 +470,13 @@ constexpr enable_if_arithmetic_t<T> sqrt(T x) noexcept
 // ========================= Comparison =========================
 
 template <typename T>
-constexpr bool almost_equal(T a, T b, T eps = COMPARE_EPSILON_DEFAULT<T>) noexcept
+CUDA_MODIFIER constexpr bool almost_equal(T a, T b, T eps = COMPARE_EPSILON_DEFAULT<T>) noexcept
 {
     return abs(a - b) <= eps;
 }
 
 template <typename T, std::size_t R, std::size_t C>
-constexpr bool almost_equal(const mat<T, R, C>& A, const mat<T, R, C>& B, T eps = COMPARE_EPSILON_DEFAULT<T>) noexcept
+CUDA_MODIFIER constexpr bool almost_equal(const mat<T, R, C>& A, const mat<T, R, C>& B, T eps = COMPARE_EPSILON_DEFAULT<T>) noexcept
 {
     for (std::size_t i = 0; i < R * C; i++)
     {
@@ -481,7 +487,7 @@ constexpr bool almost_equal(const mat<T, R, C>& A, const mat<T, R, C>& B, T eps 
 }
 
 template <typename T>
-constexpr bool almost_equal(const vec3<T>& a, const vec3<T>& b, T eps = COMPARE_EPSILON_DEFAULT<T>) noexcept
+CUDA_MODIFIER constexpr bool almost_equal(const vec3<T>& a, const vec3<T>& b, T eps = COMPARE_EPSILON_DEFAULT<T>) noexcept
 {
     for (std::size_t i = 0; i < 3; i++)
     {
@@ -492,19 +498,19 @@ constexpr bool almost_equal(const vec3<T>& a, const vec3<T>& b, T eps = COMPARE_
 }
 
 template <typename T>
-constexpr bool almost_zero(T a, T eps = COMPARE_EPSILON_DEFAULT<T>) noexcept
+CUDA_MODIFIER constexpr bool almost_zero(T a, T eps = COMPARE_EPSILON_DEFAULT<T>) noexcept
 {
     return almost_equal(a, T(0), eps);
 }
 
 template <typename T>
-constexpr bool almost_zero(const vec3<T>& a, T eps = COMPARE_EPSILON_DEFAULT<T>) noexcept
+CUDA_MODIFIER constexpr bool almost_zero(const vec3<T>& a, T eps = COMPARE_EPSILON_DEFAULT<T>) noexcept
 {
     return almost_equal(a, vec3<T>{}, eps);
 }
 
 template <typename T, std::size_t R, std::size_t C>
-constexpr bool almost_zero(const mat<T, R, C>& a, T eps = COMPARE_EPSILON_DEFAULT<T>) noexcept
+CUDA_MODIFIER constexpr bool almost_zero(const mat<T, R, C>& a, T eps = COMPARE_EPSILON_DEFAULT<T>) noexcept
 {
     return almost_equal(a, mat<T, R, C>{}, eps);
 }
@@ -518,7 +524,7 @@ constexpr bool almost_zero(const mat<T, R, C>& a, T eps = COMPARE_EPSILON_DEFAUL
  * @return
  */
 template <typename T, std::size_t N>
-constexpr mat<T, N, N> identity() noexcept
+CUDA_MODIFIER constexpr mat<T, N, N> identity() noexcept
 {
     mat<T, N, N> I{};
     for (std::size_t i = 0; i < N; i++)
@@ -527,7 +533,7 @@ constexpr mat<T, N, N> identity() noexcept
 }
 
 template <typename T, std::size_t R, std::size_t C>
-constexpr mat<T, C, R> transpose(const mat<T, R, C>& M) noexcept
+CUDA_MODIFIER constexpr mat<T, C, R> transpose(const mat<T, R, C>& M) noexcept
 {
     mat<T, C, R> res{};
     for (std::size_t i = 0; i < R; i++)
@@ -538,14 +544,14 @@ constexpr mat<T, C, R> transpose(const mat<T, R, C>& M) noexcept
 
 // Determinant for 2x2
 template <typename T>
-constexpr T det(const mat<T, 2, 2>& M) noexcept
+CUDA_MODIFIER constexpr T det(const mat<T, 2, 2>& M) noexcept
 {
     return M(0, 0) * M(1, 1) - M(0, 1) * M(1, 0);
 }
 
 // Determinant for 3x3
 template <typename T>
-constexpr T det(const mat<T, 3, 3>& M) noexcept
+CUDA_MODIFIER constexpr T det(const mat<T, 3, 3>& M) noexcept
 {
     T a1 = M(0, 0) * (M(1, 1) * M(2, 2) - M(1, 2) * M(2, 1));
     T a2 = M(0, 1) * (M(1, 0) * M(2, 2) - M(1, 2) * M(2, 0));
@@ -555,7 +561,7 @@ constexpr T det(const mat<T, 3, 3>& M) noexcept
 
 // Determinant for 4x4
 template <typename T>
-constexpr T det(const mat<T, 4, 4>& M) noexcept
+CUDA_MODIFIER constexpr T det(const mat<T, 4, 4>& M) noexcept
 {
     T subfactor0 = M(2, 2) * M(3, 3) - M(2, 3) * M(3, 2);
     T subfactor1 = M(2, 1) * M(3, 3) - M(2, 3) * M(3, 1);
@@ -571,14 +577,14 @@ constexpr T det(const mat<T, 4, 4>& M) noexcept
 }
 
 template <typename T>
-constexpr mat<T, 2, 2> c_inverse(const mat<T, 2, 2>& M) noexcept
+CUDA_MODIFIER constexpr mat<T, 2, 2> c_inverse(const mat<T, 2, 2>& M) noexcept
 {
     T d = det(M);
     return mat<T, 2, 2>{ M(1, 1) / d, -M(0, 1) / d, -M(1, 0) / d, M(0, 0) / d };
 }
 
 template <typename T>
-constexpr mat<T, 3, 3> c_inverse(const mat<T, 3, 3>& M) noexcept
+CUDA_MODIFIER constexpr mat<T, 3, 3> c_inverse(const mat<T, 3, 3>& M) noexcept
 {
     T d = det(M);
     return mat<T, 3, 3>{ (M(1, 1) * M(2, 2) - M(1, 2) * M(2, 1)) / d, (M(0, 2) * M(2, 1) - M(0, 1) * M(2, 2)) / d,
@@ -592,13 +598,13 @@ constexpr mat<T, 3, 3> c_inverse(const mat<T, 3, 3>& M) noexcept
 }
 
 template <typename T>
-constexpr T det3x3(T a00, T a01, T a02, T a10, T a11, T a12, T a20, T a21, T a22) noexcept
+CUDA_MODIFIER constexpr T det3x3(T a00, T a01, T a02, T a10, T a11, T a12, T a20, T a21, T a22) noexcept
 {
     return a00 * (a11 * a22 - a12 * a21) - a01 * (a10 * a22 - a12 * a20) + a02 * (a10 * a21 - a11 * a20);
 }
 
 template <typename T>
-constexpr mat<T, 4, 4> c_inverse(const mat<T, 4, 4>& M) noexcept
+CUDA_MODIFIER constexpr mat<T, 4, 4> c_inverse(const mat<T, 4, 4>& M) noexcept
 {
     // Compute all cofactors for the adjugate matrix
     T c00 = det3x3(M(1, 1), M(1, 2), M(1, 3), M(2, 1), M(2, 2), M(2, 3), M(3, 1), M(3, 2), M(3, 3));
@@ -648,13 +654,13 @@ mat<T, N, N> inverse(const mat<T, N, N>& M)
 // ========================= Vector operations =========================
 
 template <typename T>
-constexpr T dot(const vec3<T>& a, const vec3<T>& b) noexcept
+CUDA_MODIFIER constexpr T dot(const vec3<T>& a, const vec3<T>& b) noexcept
 {
     return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
 template <typename T>
-constexpr vec3<T> cross(const vec3<T>& a, const vec3<T>& b) noexcept
+CUDA_MODIFIER constexpr vec3<T> cross(const vec3<T>& a, const vec3<T>& b) noexcept
 {
     return vec3<T>{ a.y * b.z - a.z * b.y, //
                     a.z * b.x - a.x * b.z, //
@@ -662,31 +668,31 @@ constexpr vec3<T> cross(const vec3<T>& a, const vec3<T>& b) noexcept
 }
 
 template <typename T>
-constexpr T norm2(const vec3<T>& v) noexcept
+CUDA_MODIFIER constexpr T norm2(const vec3<T>& v) noexcept
 {
     return dot(v, v);
 }
 
 template <typename T>
-constexpr T norm(const vec3<T>& v) noexcept
+CUDA_MODIFIER constexpr T norm(const vec3<T>& v) noexcept
 {
     return sqrt(norm2(v));
 }
 
 template <typename T>
-constexpr T length(const vec3<T>& v) noexcept
+CUDA_MODIFIER constexpr T length(const vec3<T>& v) noexcept
 {
     return norm(v);
 }
 
 template <typename T>
-constexpr vec3<T> normalize(const vec3<T>& v) noexcept
+CUDA_MODIFIER constexpr vec3<T> normalize(const vec3<T>& v) noexcept
 {
     return v / norm(v);
 }
 
 template <typename T>
-constexpr T distance(const vec3<T>& a, const vec3<T>& b) noexcept
+CUDA_MODIFIER constexpr T distance(const vec3<T>& a, const vec3<T>& b) noexcept
 {
     return norm(a - b);
 }
@@ -695,27 +701,27 @@ constexpr T distance(const vec3<T>& a, const vec3<T>& b) noexcept
 
 // Homogeneous point/vec conversion
 template <typename T>
-constexpr mat<T, 1, 4> to_homogeneous(const vec3<T>& v, T w = T(1)) noexcept
+CUDA_MODIFIER constexpr mat<T, 1, 4> to_homogeneous(const vec3<T>& v, T w = T(1)) noexcept
 {
     return { v.x, v.y, v.z, w };
 }
 
 template <typename T>
-constexpr vec3<T> from_homogeneous(const mat<T, 1, 4>& m) noexcept
+CUDA_MODIFIER constexpr vec3<T> from_homogeneous(const mat<T, 1, 4>& m) noexcept
 {
     auto& w = m(0, 3);
     return { m(0, 0) / w, m(0, 1) / w, m(0, 2) / w };
 }
 
 template <typename T>
-constexpr vec3<T> operator*(const mat3<T>& m, const vec3<T>& v) noexcept
+CUDA_MODIFIER constexpr vec3<T> operator*(const mat3<T>& m, const vec3<T>& v) noexcept
 {
     auto _v = static_cast<mat<T, 3, 1>>(v);
     return vec3<T>{ m * _v };
 }
 
 template <typename T>
-constexpr vec3<T> operator*(const mat4<T>& m, const vec3<T>& v) noexcept
+CUDA_MODIFIER constexpr vec3<T> operator*(const mat4<T>& m, const vec3<T>& v) noexcept
 {
     mat<T, 4, 1> _v{ v.x, v.y, v.z, T{ 1 } };
     mat<T, 4, 1> result = m * _v;
@@ -724,14 +730,14 @@ constexpr vec3<T> operator*(const mat4<T>& m, const vec3<T>& v) noexcept
 }
 
 template <typename T>
-constexpr vec3<T> operator*(const vec3<T>& v, const mat3<T>& m) noexcept
+CUDA_MODIFIER constexpr vec3<T> operator*(const vec3<T>& v, const mat3<T>& m) noexcept
 {
     auto _v = static_cast<mat<T, 1, 3>>(v);
     return vec3<T>{ _v * m };
 }
 
 template <typename T>
-constexpr vec3<T> operator*(const vec3<T>& v, const mat4<T>& m) noexcept
+CUDA_MODIFIER constexpr vec3<T> operator*(const vec3<T>& v, const mat4<T>& m) noexcept
 {
     mat<T, 1, 4> _v{ v.x, v.y, v.z, T{ 1 } };
     mat<T, 1, 4> result = _v * m;
@@ -742,7 +748,7 @@ constexpr vec3<T> operator*(const vec3<T>& v, const mat4<T>& m) noexcept
 // ========================= 3D Transforms (mat4) =========================
 
 template <typename T>
-constexpr mat4<T> translation(const vec3<T>& v) noexcept
+CUDA_MODIFIER constexpr mat4<T> translation(const vec3<T>& v) noexcept
 {
     mat4<T> M = identity<T, 4>();
     M(0, 3)   = v.x;
@@ -752,7 +758,7 @@ constexpr mat4<T> translation(const vec3<T>& v) noexcept
 }
 
 template <typename T>
-constexpr mat4<T> rotation(const mat3<T>& m) noexcept
+CUDA_MODIFIER constexpr mat4<T> rotation(const mat3<T>& m) noexcept
 {
     mat4<T> M(m);
     M(3, 3) = T(1);
@@ -760,7 +766,7 @@ constexpr mat4<T> rotation(const mat3<T>& m) noexcept
 }
 
 template <typename T>
-constexpr mat4<T> scale(const vec3<T>& v) noexcept
+CUDA_MODIFIER constexpr mat4<T> scale(const vec3<T>& v) noexcept
 {
     mat4<T> M{};
     M(0, 0) = v.x;
@@ -771,7 +777,7 @@ constexpr mat4<T> scale(const vec3<T>& v) noexcept
 }
 
 template <typename T>
-constexpr mat4<T> transform(const vec3<T>& t, const mat3<T>& r, const vec3<T>& s) noexcept
+CUDA_MODIFIER constexpr mat4<T> transform(const vec3<T>& t, const mat3<T>& r, const vec3<T>& s) noexcept
 {
     auto _t = translation(t);
     auto _r = rotation(r);
@@ -780,7 +786,7 @@ constexpr mat4<T> transform(const vec3<T>& t, const mat3<T>& r, const vec3<T>& s
 }
 
 template <typename T>
-constexpr mat4<T> rotation_x(T angle) noexcept
+CUDA_MODIFIER constexpr mat4<T> rotation_x(T angle) noexcept
 {
     mat4<T> M = identity<T, 4>();
     T c       = cos(angle);
@@ -794,7 +800,7 @@ constexpr mat4<T> rotation_x(T angle) noexcept
 
 // Rotation around Y axis
 template <typename T>
-constexpr mat4<T> rotation_y(T angle) noexcept
+CUDA_MODIFIER constexpr mat4<T> rotation_y(T angle) noexcept
 {
     mat4<T> M = identity<T, 4>();
     T c       = cos(angle);
@@ -808,7 +814,7 @@ constexpr mat4<T> rotation_y(T angle) noexcept
 
 // Rotation around Z axis
 template <typename T>
-constexpr mat4<T> rotation_z(T angle) noexcept
+CUDA_MODIFIER constexpr mat4<T> rotation_z(T angle) noexcept
 {
     mat4<T> M = identity<T, 4>();
     T c       = cos(angle);
@@ -822,7 +828,7 @@ constexpr mat4<T> rotation_z(T angle) noexcept
 
 // General rotation around arbitrary axis (normalized)
 template <typename T>
-constexpr mat4<T> rotation(const vec3<T>& axis, T angle) noexcept
+CUDA_MODIFIER constexpr mat4<T> rotation(const vec3<T>& axis, T angle) noexcept
 {
     vec3<T> a = normalize(axis);
     T x = a.x, y = a.y, z = a.z;
@@ -844,7 +850,7 @@ constexpr mat4<T> rotation(const vec3<T>& axis, T angle) noexcept
 
 // Rodrigues rotation: rotate vector v around axis (normalized) by angle (radians)
 template <typename T>
-constexpr vec3<T> rotate(const vec3<T>& v, const vec3<T>& axis, T angle) noexcept
+CUDA_MODIFIER constexpr vec3<T> rotate(const vec3<T>& v, const vec3<T>& axis, T angle) noexcept
 {
     vec3<T> k = normalize(axis); // ensure axis is normalized
     T cosA    = cos(angle);
@@ -856,13 +862,13 @@ constexpr vec3<T> rotate(const vec3<T>& v, const vec3<T>& axis, T angle) noexcep
 
 // Rotation with Euler angles
 template <typename T>
-constexpr mat4<T> rotation(T alpha, T beta, T gamma) noexcept
+CUDA_MODIFIER constexpr mat4<T> rotation(T alpha, T beta, T gamma) noexcept
 {
     return rotation_x(alpha) * rotation_y(beta) * rotation_z(gamma);
 }
 
 template <typename T>
-constexpr bool is_rotation_valid(const mat3<T>& rot) noexcept
+CUDA_MODIFIER constexpr bool is_rotation_valid(const mat3<T>& rot) noexcept
 {
     if (almost_zero(rot))
         return false;
@@ -878,19 +884,19 @@ constexpr bool is_rotation_valid(const mat3<T>& rot) noexcept
 }
 
 template <typename T>
-constexpr bool is_scale_valid(const vec3<T>& s) noexcept
+CUDA_MODIFIER constexpr bool is_scale_valid(const vec3<T>& s) noexcept
 {
     return !almost_zero(s.x) && !almost_zero(s.y) && !almost_zero(s.z);
 }
 
 template <typename T>
-constexpr vec3<T> get_translation(const mat4<T>& t) noexcept
+CUDA_MODIFIER constexpr vec3<T> get_translation(const mat4<T>& t) noexcept
 {
     return { t(0, 3), t(1, 3), t(2, 3) };
 }
 
 template <typename T>
-constexpr vec3<T> get_scale(const mat4<T>& t) noexcept
+CUDA_MODIFIER constexpr vec3<T> get_scale(const mat4<T>& t) noexcept
 {
     return { length(vec3<T>{ t(0, 0), t(0, 1), t(0, 2) }),
              length(vec3<T>{ t(1, 0), t(1, 1), t(1, 2) }),
@@ -898,13 +904,13 @@ constexpr vec3<T> get_scale(const mat4<T>& t) noexcept
 }
 
 template <typename T>
-constexpr mat3<T> c_get_rotation(const mat4<T>& t) noexcept
+CUDA_MODIFIER constexpr mat3<T> c_get_rotation(const mat4<T>& t) noexcept
 {
     auto s = get_scale(t);
     return {
-        {t(0, 0) / s[0], t(0, 1) / s[1], t(0, 2) / s[2]},
-        {t(1, 0) / s[0], t(1, 1) / s[1], t(1, 2) / s[2]},
-        {t(2, 0) / s[0], t(2, 1) / s[1], t(2, 2) / s[2]}
+        { t(0, 0) / s[0], t(0, 1) / s[1], t(0, 2) / s[2] },
+        { t(1, 0) / s[0], t(1, 1) / s[1], t(1, 2) / s[2] },
+        { t(2, 0) / s[0], t(2, 1) / s[1], t(2, 2) / s[2] }
     };
 }
 
@@ -924,7 +930,15 @@ mat3<T> get_rotation(const mat4<T>& t)
 }
 
 template <typename T>
-constexpr mat4<T> c_inverse_transform(const mat4<T>& transform)
+void decompose(const mat4<T>& transform, vec3<T>& t, mat3<T>& r, vec3<T>& s)
+{
+    t = get_translation(transform);
+    r = get_rotation(transform);
+    s = get_scale(transform);
+}
+
+template <typename T>
+CUDA_MODIFIER constexpr mat4<T> c_inverse_transform(const mat4<T>& transform)
 {
     auto t = get_translation(transform);
     auto r = c_get_rotation(transform);
@@ -953,18 +967,10 @@ mat4<T> inverse_transform(const mat4<T>& transform)
     return inv_s * inv_r * inv_t;
 }
 
-template <typename T>
-void decompose(const mat4<T>& transform, vec3<T>& t, mat3<T>& r, vec3<T>& s)
-{
-    t = get_translation(transform);
-    r = get_rotation(transform);
-    s = get_scale(transform);
-}
-
 // ========================= Camera (mat4) =========================
 
 template <typename T>
-constexpr mat4<T> look_at(const vec3<T>& eye, const vec3<T>& center, const vec3<T>& up) noexcept
+CUDA_MODIFIER constexpr mat4<T> look_at(const vec3<T>& eye, const vec3<T>& center, const vec3<T>& up) noexcept
 {
     vec3<T> f = normalize(center - eye); // Direction camera is looking
     vec3<T> r = normalize(cross(f, up)); // Camera's right
@@ -982,31 +988,31 @@ constexpr mat4<T> look_at(const vec3<T>& eye, const vec3<T>& center, const vec3<
 }
 
 template <typename T>
-constexpr vec3<T> right_vec(const mat4<T>& view) noexcept
+CUDA_MODIFIER constexpr vec3<T> right_vec(const mat4<T>& view) noexcept
 {
     return { view.template get<0, 0>(), view.template get<0, 1>(), view.template get<0, 2>() };
 }
 
 template <typename T>
-constexpr vec3<T> up_vec(const mat4<T>& view) noexcept
+CUDA_MODIFIER constexpr vec3<T> up_vec(const mat4<T>& view) noexcept
 {
     return { view.template get<1, 0>(), view.template get<1, 1>(), view.template get<1, 2>() };
 }
 
 template <typename T>
-constexpr vec3<T> forward_vec(const mat4<T>& view) noexcept
+CUDA_MODIFIER constexpr vec3<T> forward_vec(const mat4<T>& view) noexcept
 {
     return { -view.template get<2, 0>(), -view.template get<2, 1>(), -view.template get<2, 2>() };
 }
 
 template <typename T>
-constexpr vec3<T> translation_vec(const mat4<T>& view) noexcept
+CUDA_MODIFIER constexpr vec3<T> translation_vec(const mat4<T>& view) noexcept
 {
     return { view.template get<3, 0>(), view.template get<3, 1>(), view.template get<3, 2>() };
 }
 
 template <typename T>
-constexpr mat4<T> ortho(T left, T right, T bottom, T top, T near, T far) noexcept
+CUDA_MODIFIER constexpr mat4<T> ortho(T left, T right, T bottom, T top, T near, T far) noexcept
 {
     mat4<T> result{};
 
@@ -1032,7 +1038,7 @@ constexpr mat4<T> ortho(T left, T right, T bottom, T top, T near, T far) noexcep
  * @return
  */
 template <typename T>
-constexpr mat4<T> perspective(T fovy, T aspect, T near, T far) noexcept
+CUDA_MODIFIER constexpr mat4<T> perspective(T fovy, T aspect, T near, T far) noexcept
 {
     T tan_half_fovy = tan(fovy / T{ 2 });
 
@@ -1048,7 +1054,7 @@ constexpr mat4<T> perspective(T fovy, T aspect, T near, T far) noexcept
 }
 
 template <typename T>
-constexpr T radians(T degrees) noexcept
+CUDA_MODIFIER constexpr T radians(T degrees) noexcept
 {
     return degrees * pi<T> / T{ 180 };
 }
