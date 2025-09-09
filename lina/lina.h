@@ -71,7 +71,7 @@ struct mat
     }
 
     template <std::size_t r, std::size_t c>
-    constexpr T& get()
+    constexpr T& get() noexcept
     {
         static_assert(r < R, "Row index out of bounds");
         static_assert(c < C, "Column index out of bounds");
@@ -79,17 +79,17 @@ struct mat
     }
 
     template <std::size_t r, std::size_t c>
-    constexpr const T& get() const
+    constexpr const T& get() const noexcept
     {
         static_assert(r < R, "Row index out of bounds");
         static_assert(c < C, "Column index out of bounds");
         return operator()(r, c);
     }
 
-    constexpr T* data() { return a; }
-    constexpr const T* data() const { return a; }
+    constexpr T* data() noexcept { return a; }
+    constexpr const T* data() const noexcept { return a; }
 
-    constexpr T& operator()(std::size_t r, std::size_t c)
+    constexpr T& operator()(std::size_t r, std::size_t c) noexcept
     {
 #ifdef LINA_MAT_COLUMN_MAJOR
         return a[c * R + r];
@@ -98,7 +98,7 @@ struct mat
 #endif
     }
 
-    constexpr const T& operator()(std::size_t r, std::size_t c) const
+    constexpr const T& operator()(std::size_t r, std::size_t c) const noexcept
     {
 #ifdef LINA_MAT_COLUMN_MAJOR
         return a[c * R + r];
@@ -107,22 +107,22 @@ struct mat
 #endif
     }
 
-    constexpr T& operator[](std::size_t i) { return a[i]; }
-    constexpr const T& operator[](std::size_t i) const { return a[i]; }
+    constexpr T& operator[](std::size_t i) noexcept { return a[i]; }
+    constexpr const T& operator[](std::size_t i) const noexcept { return a[i]; }
 
-    constexpr T& operator()(std::size_t i)
+    constexpr T& operator()(std::size_t i) noexcept
     {
         static_assert(R == 1 || C == 1);
         return operator[](i);
     }
 
-    constexpr const T& operator()(std::size_t i) const
+    constexpr const T& operator()(std::size_t i) const noexcept
     {
         static_assert(R == 1 || C == 1);
         return operator[](i);
     }
 
-    constexpr mat<T, R, 1> col(std::size_t c) const
+    constexpr mat<T, R, 1> col(std::size_t c) const noexcept
     {
         mat<T, R, 1> result{};
         for (std::size_t i = 0; i < R; i++)
@@ -130,7 +130,7 @@ struct mat
         return result;
     }
 
-    constexpr mat<T, 1, C> row(std::size_t r) const
+    constexpr mat<T, 1, C> row(std::size_t r) const noexcept
     {
         mat<T, 1, C> result{};
         for (std::size_t i = 0; i < C; i++)
@@ -139,14 +139,14 @@ struct mat
     }
 
     template <std::size_t r>
-    constexpr mat<T, 1, C> row() const
+    constexpr mat<T, 1, C> row() const noexcept
     {
         static_assert(r < R, "Row index out of bounds");
         return row(r);
     }
 
     template <std::size_t c>
-    constexpr mat<T, R, 1> col() const
+    constexpr mat<T, R, 1> col() const noexcept
     {
         static_assert(c < C, "Column index out of bounds");
         return col(c);
@@ -154,9 +154,9 @@ struct mat
 
     // ===== Unary operators =====
 
-    constexpr mat operator+() const { return *this; }
+    constexpr mat operator+() const noexcept { return *this; }
 
-    constexpr mat operator-() const
+    constexpr mat operator-() const noexcept
     {
         mat res{};
         for (std::size_t i = 0; i < R; i++)
@@ -167,7 +167,7 @@ struct mat
 
     // ===== Scalar ops =====
 
-    constexpr mat operator*(T s) const
+    constexpr mat operator*(T s) const noexcept
     {
         mat res{};
         for (std::size_t i = 0; i < R; i++)
@@ -176,13 +176,13 @@ struct mat
         return res;
     }
 
-    constexpr mat operator/(T s) const { return *this * (T{ 1 } / s); }
+    constexpr mat operator/(T s) const noexcept { return *this * (T{ 1 } / s); }
     constexpr mat& operator*=(T s) { return *this = *this * s; }
     constexpr mat& operator/=(T s) { return *this = *this / s; }
 
     // ===== Matrix elementwise ops =====
 
-    constexpr mat operator+(const mat& other) const
+    constexpr mat operator+(const mat& other) const noexcept
     {
         mat res{};
         for (std::size_t i = 0; i < R; i++)
@@ -191,14 +191,14 @@ struct mat
         return res;
     }
 
-    constexpr mat operator-(const mat& other) const { return *this + (-other); }
+    constexpr mat operator-(const mat& other) const noexcept { return *this + (-other); }
     constexpr mat& operator+=(const mat& other) { return *this = *this + other; }
     constexpr mat& operator-=(const mat& other) { return *this += -other; }
 
     // ===== Matrix multiplication =====
 
     template <std::size_t K>
-    constexpr mat<T, R, K> operator*(const mat<T, C, K>& B) const
+    constexpr mat<T, R, K> operator*(const mat<T, C, K>& B) const noexcept
     {
         mat<T, R, K> res{};
         for (std::size_t i = 0; i < R; i++)
@@ -226,6 +226,13 @@ struct mat
         }
         os << "}";
         return os;
+    }
+
+    std::string str() const
+    {
+        std::ostringstream ss;
+        ss << *this;
+        return ss.str();
     }
 };
 
@@ -271,8 +278,8 @@ struct vec3
     constexpr vec3& operator=(const vec3& other) = default;
 
     // Conversion operator into matrix
-    constexpr explicit operator mat<T, 3, 1>() const { return mat<T, 3, 1>{ x, y, z }; }
-    constexpr explicit operator mat<T, 1, 3>() const { return mat<T, 1, 3>{ x, y, z }; }
+    constexpr explicit operator mat<T, 3, 1>() const noexcept { return mat<T, 3, 1>{ x, y, z }; }
+    constexpr explicit operator mat<T, 1, 3>() const noexcept { return mat<T, 1, 3>{ x, y, z }; }
 
     constexpr explicit vec3(const mat<T, 1, 3>& m)
         : vec3(m(0), m(1), m(2))
@@ -289,40 +296,40 @@ struct vec3
         , z{ static_cast<T>(other.z) }
     {}
 
-    T* data() { return &x; }
-    const T* data() const { return &x; }
+    T* data() noexcept { return &x; }
+    const T* data() const noexcept { return &x; }
 
     template <std::size_t i>
-    constexpr T& get()
+    constexpr T& get() noexcept
     {
         static_assert(i < 3, "Index out of bounds");
         return data()[i];
     }
 
     template <std::size_t i>
-    constexpr const T& get() const
+    constexpr const T& get() const noexcept
     {
         static_assert(i < 3, "Index out of bounds");
         return data()[i];
     }
 
-    constexpr T& operator[](std::size_t i) { return *(&x + i); }
-    constexpr const T& operator[](const std::size_t i) const { return *(&x + i); }
+    constexpr T& operator[](std::size_t i) noexcept { return *(&x + i); }
+    constexpr const T& operator[](std::size_t i) const noexcept { return *(&x + i); }
 
     // ===== Unary Arithmetic Operations =====
 
-    constexpr vec3 operator+() const { return *this; }
-    constexpr vec3 operator-() const { return { -x, -y, -z }; }
+    constexpr vec3 operator+() const noexcept { return *this; }
+    constexpr vec3 operator-() const noexcept { return { -x, -y, -z }; }
 
     // ===== Binary Arithmetic Operations (vector + vector) =====
 
-    constexpr vec3 operator+(const vec3& other) const { return { x + other.x, y + other.y, z + other.z }; }
-    constexpr vec3 operator-(const vec3& other) const { return *this + (-other); }
+    constexpr vec3 operator+(const vec3& other) const noexcept { return { x + other.x, y + other.y, z + other.z }; }
+    constexpr vec3 operator-(const vec3& other) const noexcept { return *this + (-other); }
 
     // ===== Binary Arithmetic Operations (vector + scalar) =====
 
-    constexpr vec3 operator*(T scalar) const { return { x * scalar, y * scalar, z * scalar }; }
-    constexpr vec3 operator/(T scalar) const { return *this * (T{ 1 } / scalar); }
+    constexpr vec3 operator*(T scalar) const noexcept { return { x * scalar, y * scalar, z * scalar }; }
+    constexpr vec3 operator/(T scalar) const noexcept { return *this * (T{ 1 } / scalar); }
 
     // ===== Compound Assignment Operations (vector + vector) =====
 
@@ -339,7 +346,7 @@ struct vec3
         return os << "{ " << obj.x << ", " << obj.y << ", " << obj.z << " }";
     }
 
-    [[nodiscard]] std::string str() const
+    std::string str() const
     {
         std::ostringstream ss;
         ss << *this;
@@ -375,7 +382,7 @@ constexpr T COMPARE_EPSILON_DEFAULT = static_cast<T>(1e-6);
 template <typename T>
 constexpr T pi = static_cast<T>(3.141592653589793L);
 
-// ========================= Comparison =========================
+// ========================= Constexpr Math Functions =========================
 
 template <typename T>
 constexpr std::enable_if_t<std::is_arithmetic_v<T>, T> abs(T x) noexcept
@@ -384,13 +391,85 @@ constexpr std::enable_if_t<std::is_arithmetic_v<T>, T> abs(T x) noexcept
 }
 
 template <typename T>
-constexpr bool almost_equal(T a, T b, T eps = COMPARE_EPSILON_DEFAULT<T>)
+constexpr T sin(T x) noexcept
+{
+    // Normalize x to [-pi, pi] range for better convergence
+    while (x > pi<T>)
+        x -= T(2) * pi<T>;
+    while (x < -pi<T>)
+        x += T(2) * pi<T>;
+
+    T result{ 0 }, power{ x };
+    for (auto factorial{ 1LLU }, n{ 1ULL }; n <= 16; factorial *= ++n, power *= x)
+        if (n & 1)
+            result += (n & 2 ? -power : power) / static_cast<T>(factorial);
+    return result;
+}
+
+template <typename T>
+constexpr T cos(T x) noexcept
+{
+    // Normalize x to [-pi, pi] range for better convergence
+    while (x > pi<T>)
+        x -= T(2) * pi<T>;
+    while (x < -pi<T>)
+        x += T(2) * pi<T>;
+
+    T result{ 1 }, power{ x };
+    for (auto factorial{ 1LLU }, n{ 1ULL }; n <= 16; factorial *= ++n, power *= x)
+        if (!(n & 1))
+            result += (n & 2 ? -power : power) / static_cast<T>(factorial);
+    return result;
+}
+
+template <typename T>
+constexpr T tan(T x) noexcept
+{
+    return lina::sin(x) / lina::cos(x);
+}
+
+template <typename T>
+constexpr T sqrt(T x) noexcept
+{
+    if (x < T(0))
+        return T(0); // Return 0 for negative inputs (like std::sqrt for NaN behavior)
+
+    if (x == T(0))
+        return T(0);
+
+    // Newton-Raphson method: x_{n+1} = (x_n + a/x_n) / 2
+    // Initial guess - use a simple heuristic
+    T guess = x;
+    if (x >= T(1))
+        guess = x / T(2); // For x >= 1, start with x/2
+    else
+        guess = x; // For 0 < x < 1, start with x itself
+
+    // Perform Newton-Raphson iterations
+    for (int i = 0; i < 20; ++i) // 20 iterations should be enough for good precision
+    {
+        T next_guess = (guess + x / guess) / T(2);
+
+        // Check for convergence
+        if (lina::abs(next_guess - guess) < T(1e-15))
+            break;
+
+        guess = next_guess;
+    }
+
+    return guess;
+}
+
+// ========================= Comparison =========================
+
+template <typename T>
+constexpr bool almost_equal(T a, T b, T eps = COMPARE_EPSILON_DEFAULT<T>) noexcept
 {
     return abs(a - b) <= eps;
 }
 
 template <typename T, std::size_t R, std::size_t C>
-constexpr bool almost_equal(const mat<T, R, C>& A, const mat<T, R, C>& B, T eps = COMPARE_EPSILON_DEFAULT<T>)
+constexpr bool almost_equal(const mat<T, R, C>& A, const mat<T, R, C>& B, T eps = COMPARE_EPSILON_DEFAULT<T>) noexcept
 {
     for (std::size_t i = 0; i < R * C; i++)
     {
@@ -401,7 +480,7 @@ constexpr bool almost_equal(const mat<T, R, C>& A, const mat<T, R, C>& B, T eps 
 }
 
 template <typename T>
-constexpr bool almost_equal(const vec3<T>& a, const vec3<T>& b, T eps = COMPARE_EPSILON_DEFAULT<T>)
+constexpr bool almost_equal(const vec3<T>& a, const vec3<T>& b, T eps = COMPARE_EPSILON_DEFAULT<T>) noexcept
 {
     for (std::size_t i = 0; i < 3; i++)
     {
@@ -412,19 +491,19 @@ constexpr bool almost_equal(const vec3<T>& a, const vec3<T>& b, T eps = COMPARE_
 }
 
 template <typename T>
-constexpr bool almost_zero(T a, T eps = COMPARE_EPSILON_DEFAULT<T>)
+constexpr bool almost_zero(T a, T eps = COMPARE_EPSILON_DEFAULT<T>) noexcept
 {
     return almost_equal(a, T(0), eps);
 }
 
 template <typename T>
-constexpr bool almost_zero(const vec3<T>& a, T eps = COMPARE_EPSILON_DEFAULT<T>)
+constexpr bool almost_zero(const vec3<T>& a, T eps = COMPARE_EPSILON_DEFAULT<T>) noexcept
 {
     return almost_equal(a, vec3<T>{}, eps);
 }
 
 template <typename T, std::size_t R, std::size_t C>
-constexpr bool almost_zero(const mat<T, R, C>& a, T eps = COMPARE_EPSILON_DEFAULT<T>)
+constexpr bool almost_zero(const mat<T, R, C>& a, T eps = COMPARE_EPSILON_DEFAULT<T>) noexcept
 {
     return almost_equal(a, mat<T, R, C>{}, eps);
 }
@@ -438,7 +517,7 @@ constexpr bool almost_zero(const mat<T, R, C>& a, T eps = COMPARE_EPSILON_DEFAUL
  * @return
  */
 template <typename T, std::size_t N>
-constexpr mat<T, N, N> identity()
+constexpr mat<T, N, N> identity() noexcept
 {
     mat<T, N, N> I{};
     for (std::size_t i = 0; i < N; i++)
@@ -447,7 +526,7 @@ constexpr mat<T, N, N> identity()
 }
 
 template <typename T, std::size_t R, std::size_t C>
-constexpr mat<T, C, R> transpose(const mat<T, R, C>& M)
+constexpr mat<T, C, R> transpose(const mat<T, R, C>& M) noexcept
 {
     mat<T, C, R> res{};
     for (std::size_t i = 0; i < R; i++)
@@ -458,14 +537,14 @@ constexpr mat<T, C, R> transpose(const mat<T, R, C>& M)
 
 // Determinant for 2x2
 template <typename T>
-constexpr T det(const mat<T, 2, 2>& M)
+constexpr T det(const mat<T, 2, 2>& M) noexcept
 {
     return M(0, 0) * M(1, 1) - M(0, 1) * M(1, 0);
 }
 
 // Determinant for 3x3
 template <typename T>
-constexpr T det(const mat<T, 3, 3>& M)
+constexpr T det(const mat<T, 3, 3>& M) noexcept
 {
     T a1 = M(0, 0) * (M(1, 1) * M(2, 2) - M(1, 2) * M(2, 1));
     T a2 = M(0, 1) * (M(1, 0) * M(2, 2) - M(1, 2) * M(2, 0));
@@ -475,7 +554,7 @@ constexpr T det(const mat<T, 3, 3>& M)
 
 // Determinant for 4x4
 template <typename T>
-constexpr T det(const mat<T, 4, 4>& M)
+constexpr T det(const mat<T, 4, 4>& M) noexcept
 {
     T subfactor0 = M(2, 2) * M(3, 3) - M(2, 3) * M(3, 2);
     T subfactor1 = M(2, 1) * M(3, 3) - M(2, 3) * M(3, 1);
@@ -491,14 +570,14 @@ constexpr T det(const mat<T, 4, 4>& M)
 }
 
 template <typename T>
-constexpr mat<T, 2, 2> c_inverse(const mat<T, 2, 2>& M)
+constexpr mat<T, 2, 2> c_inverse(const mat<T, 2, 2>& M) noexcept
 {
     T d = det(M);
     return mat<T, 2, 2>{ M(1, 1) / d, -M(0, 1) / d, -M(1, 0) / d, M(0, 0) / d };
 }
 
 template <typename T>
-constexpr mat<T, 3, 3> c_inverse(const mat<T, 3, 3>& M)
+constexpr mat<T, 3, 3> c_inverse(const mat<T, 3, 3>& M) noexcept
 {
     T d = det(M);
     return mat<T, 3, 3>{ (M(1, 1) * M(2, 2) - M(1, 2) * M(2, 1)) / d, (M(0, 2) * M(2, 1) - M(0, 1) * M(2, 2)) / d,
@@ -512,13 +591,13 @@ constexpr mat<T, 3, 3> c_inverse(const mat<T, 3, 3>& M)
 }
 
 template <typename T>
-constexpr T det3x3(T a00, T a01, T a02, T a10, T a11, T a12, T a20, T a21, T a22)
+constexpr T det3x3(T a00, T a01, T a02, T a10, T a11, T a12, T a20, T a21, T a22) noexcept
 {
     return a00 * (a11 * a22 - a12 * a21) - a01 * (a10 * a22 - a12 * a20) + a02 * (a10 * a21 - a11 * a20);
 }
 
 template <typename T>
-constexpr mat<T, 4, 4> c_inverse(const mat<T, 4, 4>& M)
+constexpr mat<T, 4, 4> c_inverse(const mat<T, 4, 4>& M) noexcept
 {
     // Compute all cofactors for the adjugate matrix
     T c00 = det3x3(M(1, 1), M(1, 2), M(1, 3), M(2, 1), M(2, 2), M(2, 3), M(3, 1), M(3, 2), M(3, 3));
@@ -568,13 +647,13 @@ mat<T, N, N> inverse(const mat<T, N, N>& M)
 // ========================= Vector operations =========================
 
 template <typename T>
-constexpr T dot(const vec3<T>& a, const vec3<T>& b)
+constexpr T dot(const vec3<T>& a, const vec3<T>& b) noexcept
 {
     return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
 template <typename T>
-constexpr vec3<T> cross(const vec3<T>& a, const vec3<T>& b)
+constexpr vec3<T> cross(const vec3<T>& a, const vec3<T>& b) noexcept
 {
     return vec3<T>{ a.y * b.z - a.z * b.y, //
                     a.z * b.x - a.x * b.z, //
@@ -582,31 +661,31 @@ constexpr vec3<T> cross(const vec3<T>& a, const vec3<T>& b)
 }
 
 template <typename T>
-constexpr T norm2(const vec3<T>& v)
+constexpr T norm2(const vec3<T>& v) noexcept
 {
     return dot(v, v);
 }
 
 template <typename T>
-T norm(const vec3<T>& v)
+constexpr T norm(const vec3<T>& v) noexcept
 {
-    return std::sqrt(norm2(v));
+    return sqrt(norm2(v));
 }
 
 template <typename T>
-T length(const vec3<T>& v)
+constexpr T length(const vec3<T>& v) noexcept
 {
     return norm(v);
 }
 
 template <typename T>
-vec3<T> normalize(const vec3<T>& v)
+constexpr vec3<T> normalize(const vec3<T>& v) noexcept
 {
     return v / norm(v);
 }
 
 template <typename T>
-T distance(const vec3<T> a, const vec3<T> b)
+constexpr T distance(const vec3<T>& a, const vec3<T>& b) noexcept
 {
     return norm(a - b);
 }
@@ -615,58 +694,54 @@ T distance(const vec3<T> a, const vec3<T> b)
 
 // Homogeneous point/vec conversion
 template <typename T>
-constexpr mat<T, 1, 4> to_homogeneous(const vec3<T>& v, T w = T(1))
+constexpr mat<T, 1, 4> to_homogeneous(const vec3<T>& v, T w = T(1)) noexcept
 {
     return { v.x, v.y, v.z, w };
 }
 
 template <typename T>
-constexpr vec3<T> from_homogeneous(const mat<T, 1, 4>& m)
+constexpr vec3<T> from_homogeneous(const mat<T, 1, 4>& m) noexcept
 {
     auto& w = m(0, 3);
     return { m(0, 0) / w, m(0, 1) / w, m(0, 2) / w };
 }
 
 template <typename T>
-constexpr vec3<T> operator*(const mat3<T>& m, const vec3<T>& v)
+constexpr vec3<T> operator*(const mat3<T>& m, const vec3<T>& v) noexcept
 {
     auto _v = static_cast<mat<T, 3, 1>>(v);
     return vec3<T>{ m * _v };
 }
 
 template <typename T>
-constexpr vec3<T> operator*(const mat4<T>& m, const vec3<T>& v)
+constexpr vec3<T> operator*(const mat4<T>& m, const vec3<T>& v) noexcept
 {
     mat<T, 4, 1> _v{ v.x, v.y, v.z, T{ 1 } };
     mat<T, 4, 1> result = m * _v;
     const T& w          = result(3, 0);
-    if (almost_zero(w))
-        return {};
     return vec3<T>{ result(0) / w, result(1) / w, result(2) / w };
 }
 
 template <typename T>
-constexpr vec3<T> operator*(const vec3<T>& v, const mat3<T>& m)
+constexpr vec3<T> operator*(const vec3<T>& v, const mat3<T>& m) noexcept
 {
     auto _v = static_cast<mat<T, 1, 3>>(v);
     return vec3<T>{ _v * m };
 }
 
 template <typename T>
-constexpr vec3<T> operator*(const vec3<T>& v, const mat4<T>& m)
+constexpr vec3<T> operator*(const vec3<T>& v, const mat4<T>& m) noexcept
 {
     mat<T, 1, 4> _v{ v.x, v.y, v.z, T{ 1 } };
     mat<T, 1, 4> result = _v * m;
     const T& w          = result(0, 3);
-    if (almost_zero(w))
-        return {};
     return vec3<T>{ result(0) / w, result(1) / w, result(2) / w };
 }
 
 // ========================= 3D Transforms (mat4) =========================
 
 template <typename T>
-constexpr mat4<T> translation(const vec3<T>& v)
+constexpr mat4<T> translation(const vec3<T>& v) noexcept
 {
     mat4<T> M = identity<T, 4>();
     M(0, 3)   = v.x;
@@ -676,7 +751,7 @@ constexpr mat4<T> translation(const vec3<T>& v)
 }
 
 template <typename T>
-constexpr mat4<T> rotation(const mat3<T>& m)
+constexpr mat4<T> rotation(const mat3<T>& m) noexcept
 {
     mat4<T> M(m);
     M(3, 3) = T(1);
@@ -684,7 +759,7 @@ constexpr mat4<T> rotation(const mat3<T>& m)
 }
 
 template <typename T>
-constexpr mat4<T> scale(const vec3<T>& v)
+constexpr mat4<T> scale(const vec3<T>& v) noexcept
 {
     mat4<T> M{};
     M(0, 0) = v.x;
@@ -695,7 +770,7 @@ constexpr mat4<T> scale(const vec3<T>& v)
 }
 
 template <typename T>
-constexpr mat4<T> transform(const vec3<T>& t, const mat3<T>& r, const vec3<T>& s)
+constexpr mat4<T> transform(const vec3<T>& t, const mat3<T>& r, const vec3<T>& s) noexcept
 {
     auto _t = translation(t);
     auto _r = rotation(r);
@@ -704,11 +779,11 @@ constexpr mat4<T> transform(const vec3<T>& t, const mat3<T>& r, const vec3<T>& s
 }
 
 template <typename T>
-mat4<T> rotation_x(T angle)
+constexpr mat4<T> rotation_x(T angle) noexcept
 {
     mat4<T> M = identity<T, 4>();
-    T c       = std::cos(angle);
-    T s       = std::sin(angle);
+    T c       = cos(angle);
+    T s       = sin(angle);
     M(1, 1)   = c;
     M(1, 2)   = -s;
     M(2, 1)   = s;
@@ -718,11 +793,11 @@ mat4<T> rotation_x(T angle)
 
 // Rotation around Y axis
 template <typename T>
-mat4<T> rotation_y(T angle)
+constexpr mat4<T> rotation_y(T angle) noexcept
 {
     mat4<T> M = identity<T, 4>();
-    T c       = std::cos(angle);
-    T s       = std::sin(angle);
+    T c       = cos(angle);
+    T s       = sin(angle);
     M(0, 0)   = c;
     M(0, 2)   = s;
     M(2, 0)   = -s;
@@ -732,11 +807,11 @@ mat4<T> rotation_y(T angle)
 
 // Rotation around Z axis
 template <typename T>
-mat4<T> rotation_z(T angle)
+constexpr mat4<T> rotation_z(T angle) noexcept
 {
     mat4<T> M = identity<T, 4>();
-    T c       = std::cos(angle);
-    T s       = std::sin(angle);
+    T c       = cos(angle);
+    T s       = sin(angle);
     M(0, 0)   = c;
     M(0, 1)   = -s;
     M(1, 0)   = s;
@@ -746,11 +821,11 @@ mat4<T> rotation_z(T angle)
 
 // General rotation around arbitrary axis (normalized)
 template <typename T>
-mat4<T> rotation(const vec3<T>& axis, T angle)
+constexpr mat4<T> rotation(const vec3<T>& axis, T angle) noexcept
 {
     vec3<T> a = normalize(axis);
     T x = a.x, y = a.y, z = a.z;
-    T c = std::cos(angle), s = std::sin(angle), ic = 1 - c;
+    T c = cos(angle), s = sin(angle), ic = 1 - c;
 
     mat4<T> M = identity<T, 4>();
 
@@ -768,11 +843,11 @@ mat4<T> rotation(const vec3<T>& axis, T angle)
 
 // Rodrigues rotation: rotate vector v around axis (normalized) by angle (radians)
 template <typename T>
-vec3<T> rotate(const vec3<T>& v, const vec3<T>& axis, T angle)
+constexpr vec3<T> rotate(const vec3<T>& v, const vec3<T>& axis, T angle) noexcept
 {
     vec3<T> k = normalize(axis); // ensure axis is normalized
-    T cosA    = std::cos(angle);
-    T sinA    = std::sin(angle);
+    T cosA    = cos(angle);
+    T sinA    = sin(angle);
 
     // v_rot = v*cosA + (k × v)*sinA + k*(k•v)*(1-cosA)
     return v * cosA + cross(k, v) * sinA + k * (dot(k, v) * (1 - cosA));
@@ -780,13 +855,13 @@ vec3<T> rotate(const vec3<T>& v, const vec3<T>& axis, T angle)
 
 // Rotation with Euler angles
 template <typename T>
-mat4<T> rotation(T alpha, T beta, T gamma)
+constexpr mat4<T> rotation(T alpha, T beta, T gamma) noexcept
 {
     return rotation_x(alpha) * rotation_y(beta) * rotation_z(gamma);
 }
 
 template <typename T>
-bool is_rotation_valid(const mat3<T>& rot)
+constexpr bool is_rotation_valid(const mat3<T>& rot) noexcept
 {
     if (almost_zero(rot))
         return false;
@@ -796,25 +871,25 @@ bool is_rotation_valid(const mat3<T>& rot)
         return false;
 
     const bool is_orthogonal      = almost_equal(c_inverse(rot), transpose(rot));
-    const bool determinant_is_one = almost_equal(std::abs(determinant), T(1.0));
+    const bool determinant_is_one = almost_equal(lina::abs(determinant), T(1.0));
 
     return is_orthogonal && determinant_is_one;
 }
 
 template <typename T>
-constexpr bool is_scale_valid(const vec3<T>& s)
+constexpr bool is_scale_valid(const vec3<T>& s) noexcept
 {
     return !almost_zero(s.x) && !almost_zero(s.y) && !almost_zero(s.z);
 }
 
 template <typename T>
-constexpr vec3<T> get_translation(const mat4<T>& t)
+constexpr vec3<T> get_translation(const mat4<T>& t) noexcept
 {
     return { t(0, 3), t(1, 3), t(2, 3) };
 }
 
 template <typename T>
-vec3<T> get_scale(const mat4<T>& t)
+constexpr vec3<T> get_scale(const mat4<T>& t) noexcept
 {
     return { length(vec3<T>{ t(0, 0), t(0, 1), t(0, 2) }),
              length(vec3<T>{ t(1, 0), t(1, 1), t(1, 2) }),
@@ -864,7 +939,7 @@ mat4<T> inverse_transform(const mat4<T>& transform)
 // ========================= Camera (mat4) =========================
 
 template <typename T>
-mat4<T> look_at(const vec3<T>& eye, const vec3<T>& center, const vec3<T>& up)
+constexpr mat4<T> look_at(const vec3<T>& eye, const vec3<T>& center, const vec3<T>& up) noexcept
 {
     vec3<T> f = normalize(center - eye); // Direction camera is looking
     vec3<T> r = normalize(cross(f, up)); // Camera's right
@@ -882,31 +957,31 @@ mat4<T> look_at(const vec3<T>& eye, const vec3<T>& center, const vec3<T>& up)
 }
 
 template <typename T>
-constexpr vec3<T> right_vec(const mat4<T>& view)
+constexpr vec3<T> right_vec(const mat4<T>& view) noexcept
 {
     return { view.template get<0, 0>(), view.template get<0, 1>(), view.template get<0, 2>() };
 }
 
 template <typename T>
-constexpr vec3<T> up_vec(const mat4<T>& view)
+constexpr vec3<T> up_vec(const mat4<T>& view) noexcept
 {
     return { view.template get<1, 0>(), view.template get<1, 1>(), view.template get<1, 2>() };
 }
 
 template <typename T>
-constexpr vec3<T> forward_vec(const mat4<T>& view)
+constexpr vec3<T> forward_vec(const mat4<T>& view) noexcept
 {
     return { -view.template get<2, 0>(), -view.template get<2, 1>(), -view.template get<2, 2>() };
 }
 
 template <typename T>
-constexpr vec3<T> translation_vec(const mat4<T>& view)
+constexpr vec3<T> translation_vec(const mat4<T>& view) noexcept
 {
     return { view.template get<3, 0>(), view.template get<3, 1>(), view.template get<3, 2>() };
 }
 
 template <typename T>
-constexpr mat4<T> ortho(T left, T right, T bottom, T top, T near, T far)
+constexpr mat4<T> ortho(T left, T right, T bottom, T top, T near, T far) noexcept
 {
     mat4<T> result{};
 
@@ -932,9 +1007,9 @@ constexpr mat4<T> ortho(T left, T right, T bottom, T top, T near, T far)
  * @return
  */
 template <typename T>
-mat4<T> perspective(T fovy, T aspect, T near, T far)
+constexpr mat4<T> perspective(T fovy, T aspect, T near, T far) noexcept
 {
-    T tan_half_fovy = std::tan(fovy / T{ 2 });
+    T tan_half_fovy = tan(fovy / T{ 2 });
 
     mat4<T> result{};
 
@@ -948,7 +1023,7 @@ mat4<T> perspective(T fovy, T aspect, T near, T far)
 }
 
 template <typename T>
-constexpr T radians(T degrees)
+constexpr T radians(T degrees) noexcept
 {
     return degrees * pi<T> / T{ 180 };
 }
