@@ -1,6 +1,7 @@
 #include "lina/lina.h"
-#include <cmath>
 #include <gtest/gtest.h>
+
+#include <cmath>
 
 using namespace lina;
 
