@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
-#include <cmath>
 #include "lina/lina.h"
+
+#include <cmath>
+
 constexpr double EPSILON = 1e-6;
 
 // ========================= Constexpr Sin Tests =========================
