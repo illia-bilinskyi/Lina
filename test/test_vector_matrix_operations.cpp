@@ -1,6 +1,8 @@
 #include "lina/lina.h"
 #include <gtest/gtest.h>
 
+#include <cmath>
+
 using namespace lina;
 
 class VectorMatrixOperationsTest : public ::testing::Test
