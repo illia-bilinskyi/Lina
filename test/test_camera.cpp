@@ -57,14 +57,14 @@ class LookAtTest : public ::testing::Test
 TEST_F(LookAtTest, IdentityConfiguration)
 {
     // Camera at origin looking down negative Z (standard OpenGL setup)
-    vec3f eye{ 0.0f, 0.0f, 0.0f };
-    vec3f center{ 0.0f, 0.0f, -1.0f };
-    vec3f up{ 0.0f, 1.0f, 0.0f };
+    constexpr vec3f eye{ 0.0f, 0.0f, 0.0f };
+    constexpr vec3f center{ 0.0f, 0.0f, -1.0f };
+    constexpr vec3f up{ 0.0f, 1.0f, 0.0f };
 
-    mat4f view = look_at(eye, center, up);
+    constexpr mat4f view = look_at(eye, center, up);
 
     // Should be very close to identity matrix
-    mat4f identity_matrix = identity<float, 4>();
+    constexpr mat4f identity_matrix = identity<float, 4>();
 
     EXPECT_TRUE(almost_equal(view, identity_matrix, 1e-4f))
         << "look_at with standard configuration should produce near-identity matrix";
@@ -76,19 +76,19 @@ TEST_F(LookAtTest, IdentityConfiguration)
 TEST_F(LookAtTest, CameraAlongPositiveZ)
 {
     // Camera behind origin looking toward origin
-    vec3f eye{ 0.0f, 0.0f, 5.0f };
-    vec3f center{ 0.0f, 0.0f, 0.0f };
-    vec3f up{ 0.0f, 1.0f, 0.0f };
+    constexpr vec3f eye{ 0.0f, 0.0f, 5.0f };
+    constexpr vec3f center{ 0.0f, 0.0f, 0.0f };
+    constexpr vec3f up{ 0.0f, 1.0f, 0.0f };
 
-    mat4f view = look_at(eye, center, up);
+    constexpr mat4f view = look_at(eye, center, up);
 
     // Check that matrix is orthogonal
     EXPECT_TRUE(is_orthogonal(view));
     EXPECT_TRUE(has_correct_homogeneous_row(view));
 
     // Forward vector should point toward negative Z
-    vec3f forward          = forward_vec(view);
-    vec3f expected_forward = normalize(center - eye); // Should be (0, 0, -1)
+    constexpr vec3f forward          = forward_vec(view);
+    constexpr vec3f expected_forward = normalize(center - eye); // Should be (0, 0, -1)
 
     EXPECT_NEAR(forward.x, expected_forward.x, EPSILON);
     EXPECT_NEAR(forward.y, expected_forward.y, EPSILON);
@@ -108,18 +108,18 @@ TEST_F(LookAtTest, CameraAlongPositiveZ)
 TEST_F(LookAtTest, CameraAlongPositiveX)
 {
     // Camera to the right, looking at origin
-    vec3f eye{ 5.0f, 0.0f, 0.0f };
-    vec3f center{ 0.0f, 0.0f, 0.0f };
-    vec3f up{ 0.0f, 1.0f, 0.0f };
+    constexpr vec3f eye{ 5.0f, 0.0f, 0.0f };
+    constexpr vec3f center{ 0.0f, 0.0f, 0.0f };
+    constexpr vec3f up{ 0.0f, 1.0f, 0.0f };
 
-    mat4f view = look_at(eye, center, up);
+    constexpr mat4f view = look_at(eye, center, up);
 
     EXPECT_TRUE(is_orthogonal(view));
     EXPECT_TRUE(has_correct_homogeneous_row(view));
 
     // Forward vector should point toward negative X
-    vec3f forward          = forward_vec(view);
-    vec3f expected_forward = normalize(center - eye); // Should be (-1, 0, 0)
+    constexpr vec3f forward          = forward_vec(view);
+    constexpr vec3f expected_forward = normalize(center - eye); // Should be (-1, 0, 0)
 
     EXPECT_NEAR(forward.x, expected_forward.x, EPSILON);
     EXPECT_NEAR(forward.y, expected_forward.y, EPSILON);
@@ -135,17 +135,17 @@ TEST_F(LookAtTest, CameraAlongPositiveX)
 TEST_F(LookAtTest, CameraAboveLookingDown)
 {
     // Camera above, looking down at origin
-    vec3f eye{ 0.0f, 5.0f, 0.0f };
-    vec3f center{ 0.0f, 0.0f, 0.0f };
-    vec3f up{ 0.0f, 0.0f, -1.0f }; // Up is now negative Z
+    constexpr vec3f eye{ 0.0f, 5.0f, 0.0f };
+    constexpr vec3f center{ 0.0f, 0.0f, 0.0f };
+    constexpr vec3f up{ 0.0f, 0.0f, -1.0f }; // Up is now negative Z
 
-    mat4f view = look_at(eye, center, up);
+    constexpr mat4f view = look_at(eye, center, up);
 
     EXPECT_TRUE(is_orthogonal(view));
     EXPECT_TRUE(has_correct_homogeneous_row(view));
 
     // Forward vector should point toward negative Y
-    vec3f forward = forward_vec(view);
+    constexpr vec3f forward = forward_vec(view);
 
     EXPECT_NEAR(forward.x, 0.0f, EPSILON);
     EXPECT_NEAR(forward.y, -1.0f, EPSILON);
@@ -155,18 +155,18 @@ TEST_F(LookAtTest, CameraAboveLookingDown)
 TEST_F(LookAtTest, ArbitraryCameraPosition)
 {
     // Camera at arbitrary position
-    vec3f eye{ 3.0f, 4.0f, 5.0f };
-    vec3f center{ 1.0f, 2.0f, 1.0f };
-    vec3f up{ 0.0f, 1.0f, 0.0f };
+    constexpr vec3f eye{ 3.0f, 4.0f, 5.0f };
+    constexpr vec3f center{ 1.0f, 2.0f, 1.0f };
+    constexpr vec3f up{ 0.0f, 1.0f, 0.0f };
 
-    mat4f view = look_at(eye, center, up);
+    constexpr mat4f view = look_at(eye, center, up);
 
     EXPECT_TRUE(is_orthogonal(view));
     EXPECT_TRUE(has_correct_homogeneous_row(view));
 
     // Check that forward direction is correct
-    vec3f forward          = forward_vec(view);
-    vec3f expected_forward = normalize(center - eye);
+    constexpr vec3f forward          = forward_vec(view);
+    constexpr vec3f expected_forward = normalize(center - eye);
 
     EXPECT_NEAR(forward.x, expected_forward.x, EPSILON);
     EXPECT_NEAR(forward.y, expected_forward.y, EPSILON);
@@ -176,29 +176,29 @@ TEST_F(LookAtTest, ArbitraryCameraPosition)
 TEST_F(LookAtTest, TransformationCorrectness)
 {
     // Test that the look_at matrix correctly transforms points
-    vec3f eye{ 0.0f, 0.0f, 5.0f };
-    vec3f center{ 0.0f, 0.0f, 0.0f };
-    vec3f up{ 0.0f, 1.0f, 0.0f };
+    constexpr vec3f eye{ 0.0f, 0.0f, 5.0f };
+    constexpr vec3f center{ 0.0f, 0.0f, 0.0f };
+    constexpr vec3f up{ 0.0f, 1.0f, 0.0f };
 
-    mat4f view = look_at(eye, center, up);
+    constexpr mat4f view = look_at(eye, center, up);
 
     // A point at the center should map to (0, 0, -5) in view space
-    vec3f world_center{ 0.0f, 0.0f, 0.0f };
-    vec3f view_center = view * world_center;
+    constexpr vec3f world_center{ 0.0f, 0.0f, 0.0f };
+    constexpr vec3f view_center = view * world_center;
 
     EXPECT_NEAR(view_center.x, 0.0f, EPSILON);
     EXPECT_NEAR(view_center.y, 0.0f, EPSILON);
     EXPECT_NEAR(view_center.z, -5.0f, EPSILON);
 
     // The eye position should map to origin in view space
-    vec3f view_eye = view * eye;
+    constexpr vec3f view_eye = view * eye;
     EXPECT_NEAR(view_eye.x, 0.0f, EPSILON);
     EXPECT_NEAR(view_eye.y, 0.0f, EPSILON);
     EXPECT_NEAR(view_eye.z, 0.0f, EPSILON);
 
     // A point to the right should map to positive X in view space
-    vec3f world_right{ 1.0f, 0.0f, 0.0f };
-    vec3f view_right = view * world_right;
+    constexpr vec3f world_right{ 1.0f, 0.0f, 0.0f };
+    constexpr vec3f view_right = view * world_right;
     EXPECT_GT(view_right.x, 0.0f); // Should be positive
 }
 

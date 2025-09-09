@@ -17,7 +17,7 @@ class TransformTest : public ::testing::Test
 
 TEST_F(TransformTest, Translation_Matrix)
 {
-    mat4f result = translation(translation_vec);
+    constexpr mat4f result = translation(translation_vec);
 
     // Check translation components
     EXPECT_EQ(result(0, 3), 1.0f);
@@ -44,7 +44,7 @@ TEST_F(TransformTest, Translation_Matrix)
 
 TEST_F(TransformTest, Rotation_FromMatrix3)
 {
-    mat4f result = rotation(identity_mat3);
+    constexpr mat4f result = rotation(identity_mat3);
 
     // Should create a 4x4 with the 3x3 in upper-left and [0,0,0,1] bottom row
     for (size_t i = 0; i < 3; ++i)
@@ -67,7 +67,7 @@ TEST_F(TransformTest, Rotation_FromMatrix3)
 
 TEST_F(TransformTest, Scale_Matrix)
 {
-    mat4f result = scale(scale_vec);
+    constexpr mat4f result = scale(scale_vec);
 
     EXPECT_EQ(result(0, 0), 2.0f);
     EXPECT_EQ(result(1, 1), 3.0f);
@@ -89,11 +89,11 @@ TEST_F(TransformTest, Scale_Matrix)
 
 TEST_F(TransformTest, Transform_TRS)
 {
-    mat4f result = transform(translation_vec, identity_mat3, scale_vec);
+    constexpr mat4f result = transform(translation_vec, identity_mat3, scale_vec);
 
     // This should be T * R * S
     // Since R is identity, result should be T * S
-    mat4f expected = translation(translation_vec) * scale(scale_vec);
+    constexpr mat4f expected = translation(translation_vec) * scale(scale_vec);
 
     for (size_t i = 0; i < 4; ++i)
     {
@@ -106,7 +106,7 @@ TEST_F(TransformTest, Transform_TRS)
 
 TEST_F(TransformTest, RotationX_ZeroAngle)
 {
-    mat4f result = rotation_x(0.0f);
+    constexpr mat4f result = rotation_x(0.0f);
 
     // Should be identity matrix
     for (size_t i = 0; i < 4; ++i)
@@ -120,7 +120,7 @@ TEST_F(TransformTest, RotationX_ZeroAngle)
 
 TEST_F(TransformTest, RotationX_90Degrees)
 {
-    mat4f result = rotation_x(pi<float> / 2.0f);
+    constexpr mat4f result = rotation_x(pi<float> / 2.0f);
 
     // After 90-degree rotation around X, Y becomes Z and Z becomes -Y
     EXPECT_NEAR(result(0, 0), 1.0f, 1e-6f);
@@ -133,7 +133,7 @@ TEST_F(TransformTest, RotationX_90Degrees)
 
 TEST_F(TransformTest, RotationY_90Degrees)
 {
-    mat4f result = rotation_y(pi<float> / 2.0f);
+    constexpr mat4f result = rotation_y(pi<float> / 2.0f);
 
     // After 90-degree rotation around Y, Z becomes X and X becomes -Z
     EXPECT_NEAR(result(0, 0), 0.0f, 1e-6f);
@@ -146,7 +146,7 @@ TEST_F(TransformTest, RotationY_90Degrees)
 
 TEST_F(TransformTest, RotationZ_90Degrees)
 {
-    mat4f result = rotation_z(pi<float> / 2.0f);
+    constexpr mat4f result = rotation_z(pi<float> / 2.0f);
 
     // After 90-degree rotation around Z, X becomes Y and Y becomes -X
     EXPECT_NEAR(result(0, 0), 0.0f, 1e-6f);
@@ -159,7 +159,7 @@ TEST_F(TransformTest, RotationZ_90Degrees)
 
 TEST_F(TransformTest, Rotation_ArbitraryAxis_Identity)
 {
-    mat4f result = rotation(unit_x, 0.0f);
+    constexpr mat4f result = rotation(unit_x, 0.0f);
 
     // Zero rotation should give identity
     for (size_t i = 0; i < 4; ++i)
@@ -173,8 +173,8 @@ TEST_F(TransformTest, Rotation_ArbitraryAxis_Identity)
 
 TEST_F(TransformTest, Rotation_ArbitraryAxis_XAxis)
 {
-    mat4f result   = rotation(unit_x, pi<float> / 2.0f);
-    mat4f expected = rotation_x(pi<float> / 2.0f);
+    constexpr mat4f result   = rotation(unit_x, pi<float> / 2.0f);
+    constexpr mat4f expected = rotation_x(pi<float> / 2.0f);
 
     // Should be same as rotation_x
     for (size_t i = 0; i < 4; ++i)
@@ -188,8 +188,8 @@ TEST_F(TransformTest, Rotation_ArbitraryAxis_XAxis)
 
 TEST_F(TransformTest, Rotate_Vector_ZeroAngle)
 {
-    vec3f v{ 1.0f, 2.0f, 3.0f };
-    vec3f result = rotate(v, unit_x, 0.0f);
+    constexpr vec3f v{ 1.0f, 2.0f, 3.0f };
+    constexpr vec3f result = rotate(v, unit_x, 0.0f);
 
     EXPECT_NEAR(result.x, v.x, 1e-6f);
     EXPECT_NEAR(result.y, v.y, 1e-6f);
@@ -198,8 +198,8 @@ TEST_F(TransformTest, Rotate_Vector_ZeroAngle)
 
 TEST_F(TransformTest, Rotate_Vector_90DegreesX)
 {
-    vec3f v{ 0.0f, 1.0f, 0.0f }; // Y axis
-    vec3f result = rotate(v, unit_x, pi<float> / 2.0f);
+    constexpr vec3f v{ 0.0f, 1.0f, 0.0f }; // Y axis
+    constexpr vec3f result = rotate(v, unit_x, pi<float> / 2.0f);
 
     // Y should become Z after 90-degree rotation around X
     EXPECT_NEAR(result.x, 0.0f, 1e-6f);
@@ -211,7 +211,7 @@ TEST_F(TransformTest, IsRotationMatrix_Identity) { EXPECT_TRUE(is_rotation_valid
 
 TEST_F(TransformTest, IsRotationMatrix_ScaledMatrix)
 {
-    mat3f scaled_identity = identity_mat3 * 2.0f;
+    constexpr mat3f scaled_identity = identity_mat3 * 2.0f;
     EXPECT_FALSE(is_rotation_valid(scaled_identity));
 }
 
@@ -223,20 +223,20 @@ TEST_F(TransformTest, IsRotationMatrix_ZeroMatrix)
 
 TEST_F(TransformTest, IsScaleValid_ValidScale)
 {
-    vec3f valid_scale{ 1.0f, 2.0f, 3.0f };
+    constexpr vec3f valid_scale{ 1.0f, 2.0f, 3.0f };
     EXPECT_TRUE(is_scale_valid(valid_scale));
 }
 
 TEST_F(TransformTest, IsScaleValid_ZeroScale)
 {
-    vec3f invalid_scale{ 0.0f, 2.0f, 3.0f };
+    constexpr vec3f invalid_scale{ 0.0f, 2.0f, 3.0f };
     EXPECT_FALSE(is_scale_valid(invalid_scale));
 }
 
 TEST_F(TransformTest, GetTranslation)
 {
-    mat4f transform_matrix = translation(translation_vec);
-    vec3f result           = get_translation(transform_matrix);
+    constexpr mat4f transform_matrix = translation(translation_vec);
+    constexpr vec3f result           = get_translation(transform_matrix);
 
     EXPECT_FLOAT_EQ(result.x, 1.0f);
     EXPECT_FLOAT_EQ(result.y, 2.0f);
@@ -245,8 +245,8 @@ TEST_F(TransformTest, GetTranslation)
 
 TEST_F(TransformTest, GetScale_UniformScale)
 {
-    mat4f scale_matrix = scale(scale_vec);
-    vec3f result       = get_scale(scale_matrix);
+    constexpr mat4f scale_matrix = scale(scale_vec);
+    constexpr vec3f result       = get_scale(scale_matrix);
 
     EXPECT_FLOAT_EQ(result.x, 2.0f);
     EXPECT_FLOAT_EQ(result.y, 3.0f);
@@ -255,7 +255,7 @@ TEST_F(TransformTest, GetScale_UniformScale)
 
 TEST_F(TransformTest, GetRotation_Identity)
 {
-    mat4f transform_matrix = rotation(identity_mat3);
+    constexpr mat4f transform_matrix = rotation(identity_mat3);
     mat3f result           = get_rotation(transform_matrix);
 
     for (size_t i = 0; i < 3; ++i)
@@ -269,7 +269,7 @@ TEST_F(TransformTest, GetRotation_Identity)
 
 TEST_F(TransformTest, Decompose_TRS)
 {
-    mat4f original_transform = transform(translation_vec, identity_mat3, scale_vec);
+    constexpr mat4f original_transform = transform(translation_vec, identity_mat3, scale_vec);
 
     vec3f t, s;
     mat3f r;
@@ -333,32 +333,32 @@ TEST_F(TransformTest, FromMat_Conversion)
 TEST_F(TransformTest, Complex_Rotation_30_60_145_Degrees)
 {
     // Convert degrees to radians
-    float angle_30  = 30.0f * pi<float> / 180.0f;
-    float angle_60  = 60.0f * pi<float> / 180.0f;
-    float angle_145 = 145.0f * pi<float> / 180.0f;
+    constexpr float angle_30  = 30.0f * pi<float> / 180.0f;
+    constexpr float angle_60  = 60.0f * pi<float> / 180.0f;
+    constexpr float angle_145 = 145.0f * pi<float> / 180.0f;
 
     // Create rotation matrices
-    mat4f rot_x_30  = rotation_x(angle_30);
-    mat4f rot_y_60  = rotation_y(angle_60);
-    mat4f rot_z_145 = rotation_z(angle_145);
+    constexpr mat4f rot_x_30  = rotation_x(angle_30);
+    constexpr mat4f rot_y_60  = rotation_y(angle_60);
+    constexpr mat4f rot_z_145 = rotation_z(angle_145);
 
     // Test individual rotations
-    vec3f test_vector{ 1.0f, 0.0f, 0.0f }; // Unit X vector
+    constexpr vec3f test_vector{ 1.0f, 0.0f, 0.0f }; // Unit X vector
 
     // 30-degree rotation around X-axis (should not affect X component)
-    vec3f result_x = rot_x_30 * test_vector;
+    constexpr vec3f result_x = rot_x_30 * test_vector;
     EXPECT_NEAR(result_x.x, 1.0f, 1e-6f);
     EXPECT_NEAR(result_x.y, 0.0f, 1e-6f);
     EXPECT_NEAR(result_x.z, 0.0f, 1e-6f);
 
     // 60-degree rotation around Y-axis
-    vec3f result_y = rot_y_60 * test_vector;
+    constexpr vec3f result_y = rot_y_60 * test_vector;
     EXPECT_NEAR(result_y.x, std::cos(angle_60), 1e-6f); // cos(60°) = 0.5
     EXPECT_NEAR(result_y.y, 0.0f, 1e-6f);
     EXPECT_NEAR(result_y.z, -std::sin(angle_60), 1e-6f); // sin(60°) ≈ 0.866
 
     // 145-degree rotation around Z-axis
-    vec3f result_z = rot_z_145 * test_vector;
+    constexpr vec3f result_z = rot_z_145 * test_vector;
     EXPECT_NEAR(result_z.x, std::cos(angle_145), 1e-6f); // cos(145°) ≈ -0.819
     EXPECT_NEAR(result_z.y, std::sin(angle_145), 1e-6f); // sin(145°) ≈ 0.574
     EXPECT_NEAR(result_z.z, 0.0f, 1e-6f);
@@ -367,20 +367,20 @@ TEST_F(TransformTest, Complex_Rotation_30_60_145_Degrees)
 TEST_F(TransformTest, Complex_Composite_Rotation_XYZ)
 {
     // Convert degrees to radians
-    float angle_30  = 30.0f * pi<float> / 180.0f;
-    float angle_60  = 60.0f * pi<float> / 180.0f;
-    float angle_145 = 145.0f * pi<float> / 180.0f;
+    constexpr float angle_30  = 30.0f * pi<float> / 180.0f;
+    constexpr float angle_60  = 60.0f * pi<float> / 180.0f;
+    constexpr float angle_145 = 145.0f * pi<float> / 180.0f;
 
     // Create individual rotation matrices
-    mat4f rot_x = rotation_x(angle_30);
-    mat4f rot_y = rotation_y(angle_60);
-    mat4f rot_z = rotation_z(angle_145);
+    constexpr mat4f rot_x = rotation_x(angle_30);
+    constexpr mat4f rot_y = rotation_y(angle_60);
+    constexpr mat4f rot_z = rotation_z(angle_145);
 
     // Create composite rotation: Z * Y * X (applied in reverse order)
-    mat4f composite_rotation = rot_z * rot_y * rot_x;
+    constexpr mat4f composite_rotation = rot_z * rot_y * rot_x;
 
     // Test with unit vectors
-    vec3f unit_vectors[] = {
+    constexpr vec3f unit_vectors[] = {
         { 1.0f, 0.0f, 0.0f }, // X-axis
         { 0.0f, 1.0f, 0.0f }, // Y-axis
         { 0.0f, 0.0f, 1.0f }, // Z-axis
@@ -408,14 +408,14 @@ TEST_F(TransformTest, Complex_Composite_Rotation_XYZ)
 
 TEST_F(TransformTest, Complex_Rotation_Orthogonality_Check)
 {
-    float angle_30  = 30.0f * pi<float> / 180.0f;
-    float angle_60  = 60.0f * pi<float> / 180.0f;
-    float angle_145 = 145.0f * pi<float> / 180.0f;
+    constexpr float angle_30  = 30.0f * pi<float> / 180.0f;
+    constexpr float angle_60  = 60.0f * pi<float> / 180.0f;
+    constexpr float angle_145 = 145.0f * pi<float> / 180.0f;
 
-    mat4f rot_x     = rotation_x(angle_30);
-    mat4f rot_y     = rotation_y(angle_60);
-    mat4f rot_z     = rotation_z(angle_145);
-    mat4f composite = rot_z * rot_y * rot_x;
+    constexpr mat4f rot_x     = rotation_x(angle_30);
+    constexpr mat4f rot_y     = rotation_y(angle_60);
+    constexpr mat4f rot_z     = rotation_z(angle_145);
+    constexpr mat4f composite = rot_z * rot_y * rot_x;
 
     // Extract the 3x3 rotation part
     mat3f rotation_3x3{};
@@ -442,18 +442,18 @@ TEST_F(TransformTest, Complex_Rotation_Orthogonality_Check)
 TEST_F(TransformTest, Complex_Rotation_Specific_Results)
 {
     // Test the exact transformation of a known vector
-    float angle_30  = 30.0f * pi<float> / 180.0f;
-    float angle_60  = 60.0f * pi<float> / 180.0f;
-    float angle_145 = 145.0f * pi<float> / 180.0f;
+    constexpr float angle_30  = 30.0f * pi<float> / 180.0f;
+    constexpr float angle_60  = 60.0f * pi<float> / 180.0f;
+    constexpr float angle_145 = 145.0f * pi<float> / 180.0f;
 
-    mat4f rot_x     = rotation_x(angle_30);
-    mat4f rot_y     = rotation_y(angle_60);
-    mat4f rot_z     = rotation_z(angle_145);
-    mat4f composite = rot_x * rot_y * rot_z;
+    constexpr mat4f rot_x     = rotation_x(angle_30);
+    constexpr mat4f rot_y     = rotation_y(angle_60);
+    constexpr mat4f rot_z     = rotation_z(angle_145);
+    constexpr mat4f composite = rot_x * rot_y * rot_z;
 
     // Transform a specific test vector
-    vec3f test_vec{ 1.0f, 2.0f, 3.0f };
-    vec3f result = composite * test_vec;
+    constexpr vec3f test_vec{ 1.0f, 2.0f, 3.0f };
+    constexpr vec3f result = composite * test_vec;
 
     // Verify length preservation
     EXPECT_NEAR(norm(result), norm(test_vec), 1e-5f);
