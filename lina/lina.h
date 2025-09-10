@@ -9,8 +9,12 @@
 #define CUDA_MODIFIER
 #endif
 
-/*
- */
+#if _MSVC_LANG == 201703L
+#define INLINE_VAR_CXX_17 inline
+#else
+#define INLINE_VAR_CXX_17
+#endif
+
 // #define LINA_MAT_COLUMN_MAJOR
 
 namespace lina
@@ -36,11 +40,13 @@ struct mat
                 operator()(i, j) = fill;
     }
 
-    template <typename... Args, typename = std::enable_if_t<sizeof...(Args) == R * C>>
+    template <typename... Args, typename = typename std::enable_if<sizeof...(Args) == R * C>::type>
     CUDA_MODIFIER constexpr mat(Args... args)
     {
         std::size_t i = 0;
-        ((operator[](i++) = args), ...);
+        // Use initializer list trick to expand parameter pack
+        int dummy[] = {0, ((operator[](i++) = args), 0)...};
+        (void)dummy; // avoid unused variable warning
     }
 
     CUDA_MODIFIER constexpr mat(std::initializer_list<mat<T, 1, C>> rows)
@@ -243,7 +249,7 @@ struct mat
 template <typename T>
 struct vec3
 {
-    static_assert(std::is_arithmetic_v<T>, "Vector supports only arithmetic types.");
+    static_assert(std::is_arithmetic<T>::value, "Vector supports only arithmetic types.");
 
     T x, y, z;
 
@@ -381,15 +387,15 @@ using mat4d = mat4<double>;
 // ========================= Constants =========================
 
 template <typename T>
-inline constexpr T COMPARE_EPSILON_DEFAULT = static_cast<T>(1e-6);
+INLINE_VAR_CXX_17 constexpr T COMPARE_EPSILON_DEFAULT = static_cast<T>(1e-6);
 
 template <typename T>
-inline constexpr T pi = static_cast<T>(3.141592653589793L);
+INLINE_VAR_CXX_17 constexpr T pi = static_cast<T>(3.141592653589793L);
 
 // ========================= Constexpr Math Functions =========================
 
 template <typename T>
-using enable_if_arithmetic_t = std::enable_if_t<std::is_arithmetic_v<T>, T>;
+using enable_if_arithmetic_t = typename std::enable_if<std::is_arithmetic<T>::value, T>::type;
 
 template <typename T>
 CUDA_MODIFIER constexpr enable_if_arithmetic_t<T> abs(T x) noexcept
@@ -645,7 +651,8 @@ template <typename T, std::size_t N>
 mat<T, N, N> inverse(const mat<T, N, N>& M)
 {
     static_assert(N <= 4 && N >= 2, "Inverse matrix calculation is implemented only for N=2,3,4.");
-    if (T d = det(M); almost_zero(d))
+    T d = det(M);
+    if (almost_zero(d))
         throw std::invalid_argument("inverse matrix require non-zero determinant!");
 
     return c_inverse(M);

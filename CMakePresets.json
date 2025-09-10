@@ -7,7 +7,8 @@
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "LINA_BUILD_TESTS": "ON"
+        "LINA_BUILD_TESTS": "ON",
+        "LINA_BUILD_BENCHMARKS": "ON"
       }
     }
   ]
