@@ -64,7 +64,7 @@ struct mat
     template <std::size_t N>
     CUDA_MODIFIER constexpr explicit mat(const mat<T, N, N>& m)
     {
-        static_assert(R == C);
+        static_assert(R == C, "Enabled for square matrices");
         const std::size_t minSize = (R < N) ? R : N;
         // Copy overlapping part
         for (std::size_t i = 0; i < minSize; i++)
@@ -122,13 +122,13 @@ struct mat
 
     CUDA_MODIFIER constexpr T& operator()(std::size_t i) noexcept
     {
-        static_assert(R == 1 || C == 1);
+        static_assert(R == 1 || C == 1, "Enabled for single column or row matrices");
         return operator[](i);
     }
 
     CUDA_MODIFIER constexpr const T& operator()(std::size_t i) const noexcept
     {
-        static_assert(R == 1 || C == 1);
+        static_assert(R == 1 || C == 1, "Enabled for single column or row matrices");
         return operator[](i);
     }
 
