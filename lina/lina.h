@@ -2,6 +2,7 @@
 #include <initializer_list>
 #include <sstream>
 #include <stdexcept>
+#include <type_traits>
 
 #ifdef __CUDA_ARCH__
 #define CUDA_MODIFIER __host__ __device__
