@@ -6,7 +6,7 @@
       "displayName": "Default config",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_BUILD_TYPE": "Release",
         "LINA_BUILD_TESTS": "ON",
         "LINA_BUILD_BENCHMARKS": "ON"
       }
