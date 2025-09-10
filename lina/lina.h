@@ -16,6 +16,13 @@
 #define INLINE_VAR_CXX_17
 #endif
 
+// In Visual Studio 2015, `constexpr` applied to a member function implies `const`, which causes ambiguous overload resolution
+#if _MSC_VER <= 1900
+#define LINALG_CONSTEXPR14
+#else
+#define LINALG_CONSTEXPR14 constexpr
+#endif
+
 // #define LINA_MAT_COLUMN_MAJOR
 
 namespace lina
@@ -23,7 +30,7 @@ namespace lina
 template <typename T, std::size_t R, std::size_t C>
 struct mat
 {
-    static_assert(std::is_arithmetic_v<T>, "Matrix supports only arithmetic types.");
+    static_assert(std::is_arithmetic<T>::value, "Matrix supports only arithmetic types.");
 
     alignas(16) T a[R * C]{ 0 };
 
@@ -97,10 +104,10 @@ struct mat
         return operator()(r, c);
     }
 
-    CUDA_MODIFIER constexpr T* data() noexcept { return a; }
+    CUDA_MODIFIER LINALG_CONSTEXPR14 T* data() noexcept { return a; }
     CUDA_MODIFIER constexpr const T* data() const noexcept { return a; }
 
-    CUDA_MODIFIER constexpr T& operator()(std::size_t r, std::size_t c) noexcept
+    CUDA_MODIFIER LINALG_CONSTEXPR14 T& operator()(std::size_t r, std::size_t c) noexcept
     {
 #ifdef LINA_MAT_COLUMN_MAJOR
         return a[c * R + r];
@@ -307,8 +314,8 @@ struct vec3
         , z{ static_cast<T>(other.z) }
     {}
 
-    CUDA_MODIFIER T* data() noexcept { return &x; }
-    CUDA_MODIFIER const T* data() const noexcept { return &x; }
+    CUDA_MODIFIER LINALG_CONSTEXPR14 T* data() noexcept { return &x; }
+    CUDA_MODIFIER constexpr const T* data() const noexcept { return &x; }
 
     template <std::size_t i>
     CUDA_MODIFIER constexpr T& get() noexcept
