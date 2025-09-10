@@ -20,7 +20,7 @@
 #if _MSC_VER <= 1900
 #define LINALG_CONSTEXPR14
 #else
-#define LINALG_CONSTEXPR14 constexpr
+#define LINA_CONSTEXPR14 constexpr
 #endif
 
 // #define LINA_MAT_COLUMN_MAJOR
@@ -89,7 +89,7 @@ struct mat
     }
 
     template <std::size_t r, std::size_t c>
-    CUDA_MODIFIER constexpr T& get() noexcept
+    CUDA_MODIFIER LINA_CONSTEXPR14 T& get() noexcept
     {
         static_assert(r < R, "Row index out of bounds");
         static_assert(c < C, "Column index out of bounds");
@@ -104,10 +104,10 @@ struct mat
         return operator()(r, c);
     }
 
-    CUDA_MODIFIER LINALG_CONSTEXPR14 T* data() noexcept { return a; }
+    CUDA_MODIFIER LINA_CONSTEXPR14 T* data() noexcept { return a; }
     CUDA_MODIFIER constexpr const T* data() const noexcept { return a; }
 
-    CUDA_MODIFIER LINALG_CONSTEXPR14 T& operator()(std::size_t r, std::size_t c) noexcept
+    CUDA_MODIFIER LINA_CONSTEXPR14 T& operator()(std::size_t r, std::size_t c) noexcept
     {
 #ifdef LINA_MAT_COLUMN_MAJOR
         return a[c * R + r];
@@ -125,10 +125,10 @@ struct mat
 #endif
     }
 
-    CUDA_MODIFIER constexpr T& operator[](std::size_t i) noexcept { return a[i]; }
+    CUDA_MODIFIER LINA_CONSTEXPR14 T& operator[](std::size_t i) noexcept { return a[i]; }
     CUDA_MODIFIER constexpr const T& operator[](std::size_t i) const noexcept { return a[i]; }
 
-    CUDA_MODIFIER constexpr T& operator()(std::size_t i) noexcept
+    CUDA_MODIFIER LINA_CONSTEXPR14 T& operator()(std::size_t i) noexcept
     {
         static_assert(R == 1 || C == 1, "Enabled for single column or row matrices");
         return operator[](i);
@@ -314,11 +314,11 @@ struct vec3
         , z{ static_cast<T>(other.z) }
     {}
 
-    CUDA_MODIFIER LINALG_CONSTEXPR14 T* data() noexcept { return &x; }
+    CUDA_MODIFIER LINA_CONSTEXPR14 T* data() noexcept { return &x; }
     CUDA_MODIFIER constexpr const T* data() const noexcept { return &x; }
 
     template <std::size_t i>
-    CUDA_MODIFIER constexpr T& get() noexcept
+    CUDA_MODIFIER LINA_CONSTEXPR14 T& get() noexcept
     {
         static_assert(i < 3, "Index out of bounds");
         return data()[i];
@@ -331,7 +331,7 @@ struct vec3
         return data()[i];
     }
 
-    CUDA_MODIFIER constexpr T& operator[](std::size_t i) noexcept { return *(&x + i); }
+    CUDA_MODIFIER LINA_CONSTEXPR14 T& operator[](std::size_t i) noexcept { return *(&x + i); }
     CUDA_MODIFIER constexpr const T& operator[](std::size_t i) const noexcept { return *(&x + i); }
 
     // ===== Unary Arithmetic Operations =====
