@@ -183,6 +183,27 @@ cmake --build build/default --target test_build_lina
 #include "lina/lina.h"
 ```
 
+### **Debug Visualization**
+
+Lina includes custom LLDB formatters for enhanced debugging experience:
+
+```bash
+# Load the formatters in LLDB
+(lldb) command script import path/to/lina/lldb_matrix_formatters.py
+```
+
+The formatters provide clear matrix visualization in the debugger - it provides distinctive look for the rows.
+
+```cpp
+// In debugger, matrices display as:
+mat3f transform = {
+        {1.0f, 2.0f, 3.0f},
+        {4.0f, 5.0f, 6.0f},
+        {7.0f, 8.0f, 9.0f}
+    };
+// Shows: { { 1.0, 2.0, 3.0 }, { 4.0, 5.0, 6.0 }, { 7.0, 8.0, 9.0 } }
+```
+
 ### **CUDA Compatibility**
 
 ```cpp

@@ -50,7 +50,7 @@ def lina_mat_summary(valobj, internal_dict):
 
         result += " }"
         if r < rows - 1:
-            result += ","
+            result += ", "
 
     result += " }"
     return result
