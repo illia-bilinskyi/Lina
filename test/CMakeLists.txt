@@ -6,7 +6,22 @@ FetchContent_Declare(
 )
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+
+# Disable CTest targets from GoogleTest
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+set(gtest_disable_pthreads OFF CACHE BOOL "" FORCE)
+
+# Or more specifically for GoogleTest CTest integration
+set(GTEST_CREATE_SHARED_LIBRARY OFF CACHE BOOL "" FORCE)
+set(gtest_build_tests OFF CACHE BOOL "" FORCE)
+set(gtest_build_samples OFF CACHE BOOL "" FORCE)
+set(gmock_build_tests OFF CACHE BOOL "" FORCE)
+
+set(EXCLUDE_FROM_ALL TRUE)
 FetchContent_MakeAvailable(googletest)
+set(EXCLUDE_FROM_ALL FALSE)
 
 enable_testing()
 
