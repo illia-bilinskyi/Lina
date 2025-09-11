@@ -31,5 +31,3 @@ target_link_libraries(${LINA_TEST_TARGET_NAME}
 
 include(GoogleTest)
 gtest_discover_tests(${LINA_TEST_TARGET_NAME})
-
-add_subdirectory(test_build/)

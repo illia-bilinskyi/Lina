@@ -1,7 +1,7 @@
 # Lina - Modern C++ Linear Algebra Library
 
 [![Tests](https://github.com/illia-bilinskyi/Lina/workflows/CMake%20on%20multiple%20platforms/badge.svg)](https://github.com/illia-bilinskyi/Lina/actions)
-[![C++11/14/17](https://img.shields.io/badge/C%2B%2B-11%2F14%2F17-blue.svg)](https://isocpp.org/std/the-standard)
+[![C++14/17/20](https://img.shields.io/badge/C%2B%2B-14%2F17%2F20-blue.svg)](https://isocpp.org/std/the-standard)
 [![Header-Only](https://img.shields.io/badge/Header--Only-Yes-brightgreen.svg)]()
 [![CUDA Ready](https://img.shields.io/badge/CUDA-Ready-green.svg)]()
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -20,7 +20,7 @@ support, and mathematical precision in a single header file.
 
 ### **Modern C++ Excellence**
 
-- **Multi-standard support** - Compatible with C++11, C++14, and C++17
+- **Multi-standard support** - Compatible with C++14, C++17, and C++20
 - **Extensive constexpr support** - Most operations computed at compile-time
 - **Template metaprogramming** - Type-safe generic programming
 - **SFINAE and type traits** - Robust template constraints
@@ -52,7 +52,7 @@ support, and mathematical precision in a single header file.
 
 **Tested Configurations:**
 
-- **C++ Standards**: Full support with all features on **C++11/14/17**
+- **C++ Standards**: Full support with all features on **C++14/17/20**
 - **Platforms**: Linux (Ubuntu), Windows (MSVC), macOS (Clang)
 - **Compilers**: GCC, Clang, MSVC
 - **Build Types**: Debug and Release configurations
@@ -156,7 +156,7 @@ target_include_directories(your_target PRIVATE path/to/lina)
 ### **Comprehensive Test Coverage**
 
 - **Functional Tests**: Complete Google Test suite with C++17
-- **Build Verification**: Compilation testing across C++11/14/17
+- **Build Verification**: Compilation testing across C++14/17/20
 - **Cross-Platform**: Automated testing on Linux, Windows, and macOS
 - **Multi-Compiler**: GCC, Clang, and MSVC validation
 
