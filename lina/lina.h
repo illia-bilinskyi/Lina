@@ -2,6 +2,7 @@
 #include <initializer_list>
 #include <sstream>
 #include <stdexcept>
+#include <type_traits>
 
 #ifdef __CUDA_ARCH__
 #define CUDA_MODIFIER __host__ __device__
@@ -9,8 +10,12 @@
 #define CUDA_MODIFIER
 #endif
 
-/*
- */
+#if _MSVC_LANG == 201703L
+#define INLINE_VAR_CXX_17 inline
+#else
+#define INLINE_VAR_CXX_17
+#endif
+
 // #define LINA_MAT_COLUMN_MAJOR
 
 namespace lina
@@ -18,9 +23,9 @@ namespace lina
 template <typename T, std::size_t R, std::size_t C>
 struct mat
 {
-    static_assert(std::is_arithmetic_v<T>, "Matrix supports only arithmetic types.");
+    static_assert(std::is_arithmetic<T>::value, "Matrix supports only arithmetic types.");
 
-    T a[R * C]{ 0 };
+    alignas(16) T a[R * C]{ 0 };
 
     static constexpr std::size_t rows = R;
     static constexpr std::size_t cols = C;
@@ -36,11 +41,13 @@ struct mat
                 operator()(i, j) = fill;
     }
 
-    template <typename... Args, typename = std::enable_if_t<sizeof...(Args) == R * C>>
+    template <typename... Args, typename = typename std::enable_if<sizeof...(Args) == R * C>::type>
     CUDA_MODIFIER constexpr mat(Args... args)
     {
         std::size_t i = 0;
-        ((operator[](i++) = args), ...);
+        // Use initializer list trick to expand parameter pack
+        int dummy[] = { 0, ((operator[](i++) = args), 0)... };
+        (void)dummy; // avoid unused variable warning
     }
 
     CUDA_MODIFIER constexpr mat(std::initializer_list<mat<T, 1, C>> rows)
@@ -58,7 +65,7 @@ struct mat
     template <std::size_t N>
     CUDA_MODIFIER constexpr explicit mat(const mat<T, N, N>& m)
     {
-        static_assert(R == C);
+        static_assert(R == C, "Enabled for square matrices");
         const std::size_t minSize = (R < N) ? R : N;
         // Copy overlapping part
         for (std::size_t i = 0; i < minSize; i++)
@@ -116,13 +123,13 @@ struct mat
 
     CUDA_MODIFIER constexpr T& operator()(std::size_t i) noexcept
     {
-        static_assert(R == 1 || C == 1);
+        static_assert(R == 1 || C == 1, "Enabled for single column or row matrices");
         return operator[](i);
     }
 
     CUDA_MODIFIER constexpr const T& operator()(std::size_t i) const noexcept
     {
-        static_assert(R == 1 || C == 1);
+        static_assert(R == 1 || C == 1, "Enabled for single column or row matrices");
         return operator[](i);
     }
 
@@ -211,7 +218,7 @@ struct mat
             {
                 T sum{};
                 for (std::size_t k = 0; k < C; k++)
-                    sum += (*this)(i, k) * B(k, j);
+                    sum += operator()(i, k) * B(k, j);
                 res(i, j) = sum;
             }
         }
@@ -243,7 +250,7 @@ struct mat
 template <typename T>
 struct vec3
 {
-    static_assert(std::is_arithmetic_v<T>, "Vector supports only arithmetic types.");
+    static_assert(std::is_arithmetic<T>::value, "Vector supports only arithmetic types.");
 
     T x, y, z;
 
@@ -327,7 +334,10 @@ struct vec3
 
     // ===== Binary Arithmetic Operations (vector + vector) =====
 
-    CUDA_MODIFIER constexpr vec3 operator+(const vec3& other) const noexcept { return { x + other.x, y + other.y, z + other.z }; }
+    CUDA_MODIFIER constexpr vec3 operator+(const vec3& other) const noexcept
+    {
+        return { x + other.x, y + other.y, z + other.z };
+    }
     CUDA_MODIFIER constexpr vec3 operator-(const vec3& other) const noexcept { return *this + (-other); }
 
     // ===== Binary Arithmetic Operations (vector + scalar) =====
@@ -381,15 +391,15 @@ using mat4d = mat4<double>;
 // ========================= Constants =========================
 
 template <typename T>
-inline constexpr T COMPARE_EPSILON_DEFAULT = static_cast<T>(1e-6);
+INLINE_VAR_CXX_17 constexpr T COMPARE_EPSILON_DEFAULT = static_cast<T>(1e-6);
 
 template <typename T>
-inline constexpr T pi = static_cast<T>(3.141592653589793L);
+INLINE_VAR_CXX_17 constexpr T pi = static_cast<T>(3.141592653589793L);
 
 // ========================= Constexpr Math Functions =========================
 
 template <typename T>
-using enable_if_arithmetic_t = std::enable_if_t<std::is_arithmetic_v<T>, T>;
+using enable_if_arithmetic_t = typename std::enable_if<std::is_arithmetic<T>::value, T>::type;
 
 template <typename T>
 CUDA_MODIFIER constexpr enable_if_arithmetic_t<T> abs(T x) noexcept
@@ -476,7 +486,8 @@ CUDA_MODIFIER constexpr bool almost_equal(T a, T b, T eps = COMPARE_EPSILON_DEFA
 }
 
 template <typename T, std::size_t R, std::size_t C>
-CUDA_MODIFIER constexpr bool almost_equal(const mat<T, R, C>& A, const mat<T, R, C>& B, T eps = COMPARE_EPSILON_DEFAULT<T>) noexcept
+CUDA_MODIFIER constexpr bool
+almost_equal(const mat<T, R, C>& A, const mat<T, R, C>& B, T eps = COMPARE_EPSILON_DEFAULT<T>) noexcept
 {
     for (std::size_t i = 0; i < R * C; i++)
     {
@@ -487,7 +498,8 @@ CUDA_MODIFIER constexpr bool almost_equal(const mat<T, R, C>& A, const mat<T, R,
 }
 
 template <typename T>
-CUDA_MODIFIER constexpr bool almost_equal(const vec3<T>& a, const vec3<T>& b, T eps = COMPARE_EPSILON_DEFAULT<T>) noexcept
+CUDA_MODIFIER constexpr bool
+almost_equal(const vec3<T>& a, const vec3<T>& b, T eps = COMPARE_EPSILON_DEFAULT<T>) noexcept
 {
     for (std::size_t i = 0; i < 3; i++)
     {
@@ -517,12 +529,7 @@ CUDA_MODIFIER constexpr bool almost_zero(const mat<T, R, C>& a, T eps = COMPARE_
 
 // ========================= Matrix Operations =========================
 
-/**
- * Create an identity matrix
- * @tparam T
- * @tparam N
- * @return
- */
+// Create an identity matrix
 template <typename T, std::size_t N>
 CUDA_MODIFIER constexpr mat<T, N, N> identity() noexcept
 {
@@ -645,7 +652,8 @@ template <typename T, std::size_t N>
 mat<T, N, N> inverse(const mat<T, N, N>& M)
 {
     static_assert(N <= 4 && N >= 2, "Inverse matrix calculation is implemented only for N=2,3,4.");
-    if (T d = det(M); almost_zero(d))
+    T d = det(M);
+    if (almost_zero(d))
         throw std::invalid_argument("inverse matrix require non-zero determinant!");
 
     return c_inverse(M);
@@ -662,9 +670,9 @@ CUDA_MODIFIER constexpr T dot(const vec3<T>& a, const vec3<T>& b) noexcept
 template <typename T>
 CUDA_MODIFIER constexpr vec3<T> cross(const vec3<T>& a, const vec3<T>& b) noexcept
 {
-    return vec3<T>{ a.y * b.z - a.z * b.y, //
-                    a.z * b.x - a.x * b.z, //
-                    a.x * b.y - a.y * b.x };
+    return { a.y * b.z - a.z * b.y, //
+             a.z * b.x - a.x * b.z, //
+             a.x * b.y - a.y * b.x };
 }
 
 template <typename T>
@@ -750,11 +758,12 @@ CUDA_MODIFIER constexpr vec3<T> operator*(const vec3<T>& v, const mat4<T>& m) no
 template <typename T>
 CUDA_MODIFIER constexpr mat4<T> translation(const vec3<T>& v) noexcept
 {
-    mat4<T> M = identity<T, 4>();
-    M(0, 3)   = v.x;
-    M(1, 3)   = v.y;
-    M(2, 3)   = v.z;
-    return M;
+    return {
+        { 1, 0, 0, v.x },
+        { 0, 1, 0, v.y },
+        { 0, 0, 1, v.z },
+        { 0, 0, 0,   1 },
+    };
 }
 
 template <typename T>
@@ -768,12 +777,12 @@ CUDA_MODIFIER constexpr mat4<T> rotation(const mat3<T>& m) noexcept
 template <typename T>
 CUDA_MODIFIER constexpr mat4<T> scale(const vec3<T>& v) noexcept
 {
-    mat4<T> M{};
-    M(0, 0) = v.x;
-    M(1, 1) = v.y;
-    M(2, 2) = v.z;
-    M(3, 3) = T(1);
-    return M;
+    return {
+        { v.x,   0,   0, 0 },
+        {   0, v.y,   0, 0 },
+        {   0,   0, v.z, 0 },
+        {   0,   0,   0, 1 },
+    };
 }
 
 template <typename T>
