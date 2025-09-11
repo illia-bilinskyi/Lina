@@ -185,8 +185,9 @@ cmake --build build/default --target test_build_lina
 
 ### **Debug Visualization**
 
-Lina includes custom LLDB formatters for enhanced debugging experience:
+Lina includes custom debug formatters for enhanced debugging experience:
 
+**LLDB Formatters:**
 ```bash
 # Load the formatters in LLDB
 (lldb) command script import path/to/lina/lldb_matrix_formatters.py

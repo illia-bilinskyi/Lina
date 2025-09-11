@@ -15,7 +15,9 @@ FetchContent_Declare(
         DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 
+set(EXCLUDE_FROM_ALL TRUE)
 FetchContent_MakeAvailable(glm eigen)
+set(EXCLUDE_FROM_ALL FALSE)
 
 # Benchmark executable
 set(LINA_BENCHMARK_TARGET_NAME benchmark_lina)

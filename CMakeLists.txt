@@ -8,6 +8,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(LINA_BUILD_TESTS "Enable tests for Lina" OFF)
 option(LINA_BUILD_BENCHMARKS "Enable benchmarks for Lina" OFF)
 
+set_property(GLOBAL PROPERTY CTEST_TARGETS_ADDED 1)
+
 set(LINA_LIBRARY_NAME lina)
 
 add_subdirectory(lina)
