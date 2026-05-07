@@ -61,19 +61,21 @@ Lina vs GLM vs Eigen — Release mode, lower is better:
 | Operation                | Lina         | GLM          | Eigen       | Lina vs GLM   | Lina vs Eigen |
 |--------------------------|--------------|--------------|-------------|---------------|---------------|
 | **Vector Operations**    |              |              |             |               |               |
-| Construction (vec3)      | 1.14 ns      | 0.73 ns      | 0.29 ns     | 36% slower    | 75% slower    |
-| Addition                 | 1.08 ns      | 1.01 ns      | 0.82 ns     | ~Equal        | 24% slower    |
-| Dot Product              | 0.86 ns      | 0.60 ns      | 0.69 ns     | 30% slower    | 20% slower    |
-| Cross Product            | 1.44 ns      | 2.32 ns      | 1.69 ns     | 38% faster    | 15% faster    |
-| Normalization            | 12.70 ns     | 3.69 ns      | 3.90 ns     | 71% slower    | 69% slower    |
+| Construction (vec3)      | 1.77 ns      | 0.69 ns      | 0.69 ns     | 61% slower    | 61% slower    |
+| Addition                 | 1.18 ns      | 1.18 ns      | 1.78 ns     | ~Equal        | 34% faster    |
+| Dot Product              | 2.19 ns      | 1.28 ns      | 1.18 ns     | 42% slower    | 46% slower    |
+| Cross Product            | 2.84 ns      | 2.18 ns      | 2.21 ns     | 23% slower    | 22% slower    |
+| Normalization            | 28.62 ns     | 3.61 ns      | 6.96 ns     | 87% slower    | 76% slower    |
 | **Matrix Operations**    |              |              |             |               |               |
-| Construction (4x4)       | 1.29 ns      | 1.53 ns      | 3.07 ns     | 16% faster    | 58% faster    |
-| **Multiplication (4x4)** | **15.11 ns** | **14.71 ns** | **4.71 ns** | ~Equal        | 69% slower    |
-| Transpose (4x4)          | 2.58 ns      | 2.48 ns      | 2.95 ns     | ~Equal        | 13% faster    |
-| Determinant (4x4)        | 4.53 ns      | 4.83 ns      | 4.23 ns     | ~Equal        | ~Equal        |
+| Construction (4x4)       | 2.98 ns      | 2.97 ns      | 6.48 ns     | ~Equal        | 54% faster    |
+| **Multiplication (4x4)** | **32.64 ns** | **32.68 ns** | **9.58 ns** | ~Equal        | 71% slower    |
+| Transpose (4x4)          | 8.01 ns      | 7.45 ns      | 7.25 ns     | ~Equal        | ~Equal        |
+| Determinant (4x4)        | 11.77 ns     | 10.99 ns     | 10.74 ns    | ~Equal        | ~Equal        |
 | **Transformations**      |              |              |             |               |               |
-| Translation Matrix       | 8.70 ns      | 2.02 ns      | 6.46 ns     | 77% slower    | 26% slower    |
-| Rotation Matrix (X)      | 41.80 ns     | 39.80 ns     | 16.20 ns    | ~Equal        | 61% slower    |
-| Perspective Projection   | 41.44 ns     | 9.44 ns      | 9.51 ns     | 77% slower    | 77% slower    |
+| Translation Matrix       | 20.71 ns     | 4.81 ns      | 16.84 ns    | 77% slower    | 19% slower    |
+| Rotation Matrix (X)      | 101.48 ns    | 61.20 ns     | 32.82 ns    | 40% slower    | 68% slower    |
+| Perspective Projection   | 84.45 ns     | 25.22 ns     | 21.29 ns    | 70% slower    | 75% slower    |
 
-*MSVC 14.50 (VS 2026), Release, 1M iterations. Results vary by platform. See [`benchmarks/BENCHMARK_README.md`](benchmarks/BENCHMARK_README.md) for details.*
+*MSVC 14.50 (VS 2026), Release, 1M iterations. Absolute ns vary by hardware/thermal state — the ratios are what matter. See [`benchmarks/BENCHMARK_README.md`](benchmarks/BENCHMARK_README.md) for details.*
+
+> **Bench methodology.** Eigen comparisons force materialization (lambda return type is `Matrix4f`/`Vector3f`) to defeat lazy expression-template evaluation. Matmul/transpose/determinant pull inputs from a 64-element pool indexed by the iteration counter so the optimizer cannot hoist a loop-invariant computation out of the timed region. Both fixes were necessary — without them, Eigen's matmul appeared ~50× faster than it really is.
