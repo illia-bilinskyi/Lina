@@ -58,22 +58,22 @@ Custom LLDB formatters render matrices row-by-row in the debugger:
 
 Lina vs GLM vs Eigen — Release mode, lower is better:
 
-| Operation                | Lina         | GLM          | Eigen       | Lina vs GLM       | Lina vs Eigen     |
-|--------------------------|--------------|--------------|-------------|-------------------|-------------------|
-| **Vector Operations**    |              |              |             |                   |                   |
-| Construction (vec3)      | 0.28 ns      | 0.38 ns      | 0.27 ns     | 36% faster        | ~Equal            |
-| Addition                 | 0.24 ns      | 0.22 ns      | 4.85 ns     | ~Equal            | 20x faster        |
-| Dot Product              | 0.23 ns      | 0.22 ns      | 0.22 ns     | ~Equal            | ~Equal            |
-| Cross Product            | 0.97 ns      | 0.26 ns      | 0.23 ns     | 73% slower        | 76% slower        |
-| Normalization            | 10.57 ns     | 1.45 ns      | 2.66 ns     | 86% slower        | 75% slower        |
-| **Matrix Operations**    |              |              |             |                   |                   |
-| Construction (4x4)       | 2.40 ns      | 2.29 ns      | 6.47 ns     | ~Equal            | 63% faster        |
-| **Multiplication (4x4)** | **11.81 ns** | **13.71 ns** | **0.22 ns** | 14% faster        | 98% slower        |
-| Transpose (4x4)          | 2.21 ns      | 2.25 ns      | 0.23 ns     | ~Equal            | 90% slower        |
-| Determinant (4x4)        | 3.94 ns      | 3.73 ns      | 4.95 ns     | ~Equal            | 20% faster        |
-| **Transformations**      |              |              |             |                   |                   |
-| Translation Matrix       | 6.24 ns      | 1.73 ns      | 7.91 ns     | 72% slower        | 21% faster        |
-| Rotation Matrix          | 29.01 ns     | 24.97 ns     | 12.39 ns    | 14% slower        | 57% slower        |
-| Perspective Projection   | 31.57 ns     | 8.04 ns      | 6.56 ns     | 75% slower        | 79% slower        |
+| Operation                | Lina         | GLM          | Eigen       | Lina vs GLM   | Lina vs Eigen |
+|--------------------------|--------------|--------------|-------------|---------------|---------------|
+| **Vector Operations**    |              |              |             |               |               |
+| Construction (vec3)      | 1.14 ns      | 0.73 ns      | 0.29 ns     | 36% slower    | 75% slower    |
+| Addition                 | 1.08 ns      | 1.01 ns      | 0.82 ns     | ~Equal        | 24% slower    |
+| Dot Product              | 0.86 ns      | 0.60 ns      | 0.69 ns     | 30% slower    | 20% slower    |
+| Cross Product            | 1.44 ns      | 2.32 ns      | 1.69 ns     | 38% faster    | 15% faster    |
+| Normalization            | 12.70 ns     | 3.69 ns      | 3.90 ns     | 71% slower    | 69% slower    |
+| **Matrix Operations**    |              |              |             |               |               |
+| Construction (4x4)       | 1.29 ns      | 1.53 ns      | 3.07 ns     | 16% faster    | 58% faster    |
+| **Multiplication (4x4)** | **15.11 ns** | **14.71 ns** | **4.71 ns** | ~Equal        | 69% slower    |
+| Transpose (4x4)          | 2.58 ns      | 2.48 ns      | 2.95 ns     | ~Equal        | 13% faster    |
+| Determinant (4x4)        | 4.53 ns      | 4.83 ns      | 4.23 ns     | ~Equal        | ~Equal        |
+| **Transformations**      |              |              |             |               |               |
+| Translation Matrix       | 8.70 ns      | 2.02 ns      | 6.46 ns     | 77% slower    | 26% slower    |
+| Rotation Matrix (X)      | 41.80 ns     | 39.80 ns     | 16.20 ns    | ~Equal        | 61% slower    |
+| Perspective Projection   | 41.44 ns     | 9.44 ns      | 9.51 ns     | 77% slower    | 77% slower    |
 
-*Run with MSVC, 1M iterations. Results vary by platform. See [`benchmarks/BENCHMARK_README.md`](benchmarks/BENCHMARK_README.md) for details.*
+*MSVC 14.50 (VS 2026), Release, 1M iterations. Results vary by platform. See [`benchmarks/BENCHMARK_README.md`](benchmarks/BENCHMARK_README.md) for details.*

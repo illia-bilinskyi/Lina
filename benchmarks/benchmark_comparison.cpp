@@ -143,7 +143,8 @@ void benchmark_vector_operations()
 
     double glm_add = ComparisonTimer::benchmark_with_result([&]() { return gv1 + gv2; });
 
-    double eigen_add = ComparisonTimer::benchmark_with_result([&]() { return ev1 + ev2; });
+    double eigen_add =
+        ComparisonTimer::benchmark_with_result([&]() -> Eigen::Vector3f { return ev1 + ev2; });
 
     print_result("Lina", lina_add, lina_add);
     print_result("GLM", glm_add, lina_add);
@@ -241,7 +242,8 @@ void benchmark_matrix_operations()
 
     double glm_mult = ComparisonTimer::benchmark_with_result([&]() { return gm1 * gm2; });
 
-    double eigen_mult = ComparisonTimer::benchmark_with_result([&]() { return em1 * em2; });
+    double eigen_mult =
+        ComparisonTimer::benchmark_with_result([&]() -> Eigen::Matrix4f { return em1 * em2; });
 
     print_result("Lina", lina_mult, lina_mult);
     print_result("GLM", glm_mult, lina_mult);
@@ -254,7 +256,8 @@ void benchmark_matrix_operations()
 
     double glm_transpose = ComparisonTimer::benchmark_with_result([&]() { return glm::transpose(gm1); });
 
-    double eigen_transpose = ComparisonTimer::benchmark_with_result([&]() { return em1.transpose(); });
+    double eigen_transpose =
+        ComparisonTimer::benchmark_with_result([&]() -> Eigen::Matrix4f { return em1.transpose(); });
 
     print_result("Lina", lina_transpose, lina_transpose);
     print_result("GLM", glm_transpose, lina_transpose);
