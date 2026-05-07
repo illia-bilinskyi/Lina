@@ -66,6 +66,30 @@ class ComparisonTimer
         auto total_ns = std::chrono::duration_cast<duration>(end - start).count();
         return static_cast<double>(total_ns) / iterations;
     }
+
+    // Variant that passes the iteration index into the lambda. Use this when inputs
+    // would otherwise be loop-invariant — index a pool of inputs by `i & mask` so the
+    // optimizer cannot hoist the work out of the loop.
+    template <typename Func>
+    static double benchmark_iter(Func&& func, size_t iterations = DEFAULT_ITERATIONS)
+    {
+        for (size_t i = 0; i < WARMUP_ITERATIONS; ++i)
+        {
+            volatile auto temp = func(i);
+            (void)temp;
+        }
+
+        auto start = clock::now();
+        for (size_t i = 0; i < iterations; ++i)
+        {
+            volatile auto result = func(i);
+            (void)result;
+        }
+        auto end = clock::now();
+
+        auto total_ns = std::chrono::duration_cast<duration>(end - start).count();
+        return static_cast<double>(total_ns) / iterations;
+    }
 };
 
 // Test data generators
@@ -143,7 +167,8 @@ void benchmark_vector_operations()
 
     double glm_add = ComparisonTimer::benchmark_with_result([&]() { return gv1 + gv2; });
 
-    double eigen_add = ComparisonTimer::benchmark_with_result([&]() { return ev1 + ev2; });
+    double eigen_add =
+        ComparisonTimer::benchmark_with_result([&]() -> Eigen::Vector3f { return ev1 + ev2; });
 
     print_result("Lina", lina_add, lina_add);
     print_result("GLM", glm_add, lina_add);
@@ -219,29 +244,35 @@ void benchmark_matrix_operations()
     print_result("Eigen", eigen_construct, lina_construct);
 
     // Matrix multiplication
+    // Use a pool of inputs indexed by the iteration counter so the optimizer cannot
+    // hoist the computation out of the loop. Pool fits in L1 (64 mats * 64 B * 2 = 8 KB).
     print_header("Matrix Multiplication (4x4)");
 
-    lina::mat4f lm1{ data[0], data[1], data[2],  data[3],  data[4],  data[5],  data[6],  data[7],
-                     data[8], data[9], data[10], data[11], data[12], data[13], data[14], data[15] };
-    lina::mat4f lm2{ data[16], data[17], data[18], data[19], data[20], data[21], data[22], data[23],
-                     data[24], data[25], data[26], data[27], data[28], data[29], data[30], data[31] };
+    constexpr size_t POOL = 64;
+    constexpr size_t POOL_MASK = POOL - 1;
+    auto pool_data = TestData::random_floats(POOL * 16 * 2);
 
-    glm::mat4 gm1{ data[0], data[1], data[2],  data[3],  data[4],  data[5],  data[6],  data[7],
-                   data[8], data[9], data[10], data[11], data[12], data[13], data[14], data[15] };
-    glm::mat4 gm2{ data[16], data[17], data[18], data[19], data[20], data[21], data[22], data[23],
-                   data[24], data[25], data[26], data[27], data[28], data[29], data[30], data[31] };
+    std::vector<lina::mat4f>      lm_a(POOL), lm_b(POOL);
+    std::vector<glm::mat4>        gm_a(POOL), gm_b(POOL);
+    std::vector<Eigen::Matrix4f>  em_a(POOL), em_b(POOL);
+    for (size_t k = 0; k < POOL; ++k)
+    {
+        const float* da = &pool_data[(k * 2)     * 16];
+        const float* db = &pool_data[(k * 2 + 1) * 16];
+        for (size_t e = 0; e < 16; ++e) { lm_a[k][e] = da[e]; lm_b[k][e] = db[e]; }
+        for (size_t e = 0; e < 16; ++e) { gm_a[k][e / 4][e % 4] = da[e]; gm_b[k][e / 4][e % 4] = db[e]; }
+        em_a[k] = Eigen::Map<const Eigen::Matrix<float, 4, 4, Eigen::RowMajor>>(da);
+        em_b[k] = Eigen::Map<const Eigen::Matrix<float, 4, 4, Eigen::RowMajor>>(db);
+    }
 
-    Eigen::Matrix4f em1, em2;
-    em1 << data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11],
-        data[12], data[13], data[14], data[15];
-    em2 << data[16], data[17], data[18], data[19], data[20], data[21], data[22], data[23], data[24], data[25], data[26],
-        data[27], data[28], data[29], data[30], data[31];
+    double lina_mult = ComparisonTimer::benchmark_iter(
+        [&](size_t i) { return lm_a[i & POOL_MASK] * lm_b[i & POOL_MASK]; });
 
-    double lina_mult = ComparisonTimer::benchmark_with_result([&]() { return lm1 * lm2; });
+    double glm_mult = ComparisonTimer::benchmark_iter(
+        [&](size_t i) { return gm_a[i & POOL_MASK] * gm_b[i & POOL_MASK]; });
 
-    double glm_mult = ComparisonTimer::benchmark_with_result([&]() { return gm1 * gm2; });
-
-    double eigen_mult = ComparisonTimer::benchmark_with_result([&]() { return em1 * em2; });
+    double eigen_mult = ComparisonTimer::benchmark_iter(
+        [&](size_t i) -> Eigen::Matrix4f { return em_a[i & POOL_MASK] * em_b[i & POOL_MASK]; });
 
     print_result("Lina", lina_mult, lina_mult);
     print_result("GLM", glm_mult, lina_mult);
@@ -250,11 +281,14 @@ void benchmark_matrix_operations()
     // Matrix transpose
     print_header("Matrix Transpose (4x4)");
 
-    double lina_transpose = ComparisonTimer::benchmark_with_result([&]() { return lina::transpose(lm1); });
+    double lina_transpose = ComparisonTimer::benchmark_iter(
+        [&](size_t i) { return lina::transpose(lm_a[i & POOL_MASK]); });
 
-    double glm_transpose = ComparisonTimer::benchmark_with_result([&]() { return glm::transpose(gm1); });
+    double glm_transpose = ComparisonTimer::benchmark_iter(
+        [&](size_t i) { return glm::transpose(gm_a[i & POOL_MASK]); });
 
-    double eigen_transpose = ComparisonTimer::benchmark_with_result([&]() { return em1.transpose(); });
+    double eigen_transpose = ComparisonTimer::benchmark_iter(
+        [&](size_t i) -> Eigen::Matrix4f { return em_a[i & POOL_MASK].transpose(); });
 
     print_result("Lina", lina_transpose, lina_transpose);
     print_result("GLM", glm_transpose, lina_transpose);
@@ -263,11 +297,14 @@ void benchmark_matrix_operations()
     // Matrix determinant
     print_header("Matrix Determinant (4x4)");
 
-    double lina_det = ComparisonTimer::benchmark_with_result([&]() { return lina::det(lm1); });
+    double lina_det = ComparisonTimer::benchmark_iter(
+        [&](size_t i) { return lina::det(lm_a[i & POOL_MASK]); });
 
-    double glm_det = ComparisonTimer::benchmark_with_result([&]() { return glm::determinant(gm1); });
+    double glm_det = ComparisonTimer::benchmark_iter(
+        [&](size_t i) { return glm::determinant(gm_a[i & POOL_MASK]); });
 
-    double eigen_det = ComparisonTimer::benchmark_with_result([&]() { return em1.determinant(); });
+    double eigen_det = ComparisonTimer::benchmark_iter(
+        [&](size_t i) { return em_a[i & POOL_MASK].determinant(); });
 
     print_result("Lina", lina_det, lina_det);
     print_result("GLM", glm_det, lina_det);
